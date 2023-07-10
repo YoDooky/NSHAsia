@@ -1,0 +1,11 @@
+pyinstaller  -F  --add-binary "C:\Prometei\chromedriver.exe";"."  main_file.py
+C:\Users\ADMIN\AppData\Local\Programs\Python\Python38\Scripts\pyinstaller.exe  -F  --add-binary "C:\Prometei\chromedriver.exe";"."  main_file.py
+E:\PrometeiPY_04_07_2021_v2\Prometei\venv\Scripts\pyinstaller.exe  -F  --add-binary "C:\Prometei\chromedriver.exe";"."  main_file.py
+C:\Python\Scripts\pyinstaller.exe  -F  --add-binary "C:\Prometei\chromedriver.exe";"."  main_file.py
+pyinstaller  -F  --add-binary 'C:\Prometei\chromedriver.exe;.'  --onefile main_file.py
+pyinstaller  -F --onefile main_file.py
+
+
+
+
+

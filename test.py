@@ -1,0 +1,1 @@
+print([each for each in range(1, 10)])
