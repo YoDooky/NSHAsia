@@ -12,7 +12,7 @@ import config.read_config
 def get_section(driver):
     """Поиск номера текущего раздела"""
     section_mask = '//div[@class="section-title-area"]//div[@class="before-title"]'  # маска для определения № раздела
-    aux_func = aux_functions.AuxFunc(driver)
+    aux_func = aux_functions.AuxFunc()
     section_text = aux_func.try_get_text(section_mask, amount=1)
     try:
         current_section = int(re.findall(r'\d+', section_text)[0])

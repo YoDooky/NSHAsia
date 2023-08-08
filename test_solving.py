@@ -139,7 +139,7 @@ def click_answer(driver, data_dict):
                     log.print_log(f'Не смог кликнуть по ответу на:\n'
                                            f'-----><{question_num}>, попытка №{try_numb}...')
                     aux_func.wait_window_load_and_switch(1)
-                    aux_func.switch_to_frame()
+                    aux_func.switch_to_frame(awd)
                     time.sleep(1)
 
                 if try_numb >= max_try:
@@ -150,7 +150,7 @@ def click_answer(driver, data_dict):
                     window_height = driver.execute_script("return document.body.scrollHeight")  # высота HTML окна
                     for i in range(1, window_height, 50):  # медленно прокручиваем страницу
                         aux_func.wait_window_load_and_switch(1)
-                        aux_func.switch_to_frame()
+                        aux_func.switch_to_frame(awd)
                         driver.execute_script(f'window.scrollTo(0, {i})')
                         try:
                             value.click()

@@ -5,9 +5,16 @@ from dataclasses import dataclass
 class WebData:
     """Dataclass for data from webpage"""
     user: str
+    topic: str
     question: str
-    question_num: int
-    question_id: int
-    answer: str
-    answer_checkbox: str
+    answers: str
+    selected_answers: str
+    correct_answers: str
     is_radiobutton: int
+
+
+@dataclass
+class DbData:
+    """Dataclass for data from db"""
+    question: str
+    correct_answers: str

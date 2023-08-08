@@ -5,7 +5,7 @@ from driver_init import BrowserDriver
 class WindowLoader:
     def __init__(self):
         self.driver = BrowserDriver().browser
-        self.aux_func = aux_functions.AuxFunc(self.driver)
+        self.aux_func = aux_functions.AuxFunc()
 
     def load_window(self, target_window_path: str, window_anchor_xpath: str):
         """ Open window by URL

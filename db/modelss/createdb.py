@@ -1,12 +1,12 @@
 import sqlite3
 from dataclasses import dataclass
-from app_types import BugQuestions, WebData
+from app_types import WebData, DbData
 
-from config.db_config import DB_PATH, WEBDATA_TABLE
+from config.db_config import DB_PATH, WEBDATA_TABLE, DBDATA_TABLE
 
 
 class DbCreator:
-    """Creates database tables"""
+    """Creates db tables"""
 
     def __init__(self):
         self.conn = sqlite3.connect(DB_PATH)
@@ -23,7 +23,7 @@ class DbCreator:
                                                 )""")
 
     def __init_db__(self) -> None:
-        tables = {WEBDATA_TABLE: WebData}
+        tables = {WEBDATA_TABLE: WebData, DBDATA_TABLE: DbData}
         for key, value in tables.items():
             try:
                 self._create_table(table_name=key, user_dataclass=value)

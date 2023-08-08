@@ -1,5 +1,5 @@
 from typing import Dict, List
-from database.models import createdb
+from db.models import createdb
 
 database = createdb.DbCreator()
 conn = database.conn

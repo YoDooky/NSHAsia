@@ -10,6 +10,7 @@ from selenium.common.exceptions import TimeoutException
 from threading import Thread, Lock
 import zipfile
 
+import driver_init
 from config.folders import music_path, alarm_music_path
 from log import print_log
 
@@ -18,8 +19,8 @@ sys.tracebacklimit = 0
 
 class AuxFunc:
 
-    def __init__(self, driver):
-        self.driver = driver
+    def __init__(self):
+        self.driver = driver_init.BrowserDriver().browser
 
     def wait_element_load(self, xpath, timeout=10):
         """задержка для того чтобы загрузились скрипты, ajax и прочее гавно"""
@@ -154,7 +155,7 @@ class AuxFunc:
                 time.sleep(1)
                 continue
 
-    def switch_to_frame(self, xpath=None, try_numb: int = 10, windows_numb: int = 2):
+    def switch_to_frame(self, xpath=None, try_numb: int = 10, windows_numb: int = 1):
         """функция для переключения на фрейм"""
         for i in range(try_numb):  # пробуем переключиться на тест
             try:
@@ -163,9 +164,6 @@ class AuxFunc:
                 self.driver.switch_to.window(self.driver.window_handles[windows_numb - 1])
                 self.driver.implicitly_wait(1)
                 if xpath:
-                    self.driver.switch_to.frame(self.driver.find_element(By.XPATH, xpath))
-                else:  # если не передан путь до фрейма то берем дефолтный
-                    xpath = '//*[@id="Content"]'
                     self.driver.switch_to.frame(self.driver.find_element(By.XPATH, xpath))
                 break
             except Exception as ex:
@@ -230,7 +228,7 @@ def wait_for_user(self, err_message):
 def database_permission(workbook, database, try_numb=100):
     for i in range(1, try_numb + 1):
         try:
-            # workbook = load_workbook(filename=database)
+            # workbook = load_workbook(filename=db)
             workbook.save(database)
             break
         except PermissionError:
