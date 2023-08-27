@@ -1,19 +1,9 @@
 import logging
-from config.folders import log_path
+from config.folders import LOG_FILE_PATH
 
 
-def print_log(message, sep=None, end=None, silent=None):
-    if not silent:
-        if sep:
-            if end:
-                print(message, sep, end)
-            else:
-                print(message, sep)
-        else:
-            print(message)
-
-    # создаем файл с логами если еще не создали
-    log_file = f'{log_path}/log.txt'
+def init_logging_config():
+    log_file = f'{LOG_FILE_PATH}'
     try:
         with open(log_file, 'x') as f:
             f.write('')
@@ -21,7 +11,12 @@ def print_log(message, sep=None, end=None, silent=None):
         pass
     logging.basicConfig(filename=log_file,
                         filemode='a',
-                        format='%(asctime)s %(name)s [%(levelname)s] %(message)s',
+                        format='[%(asctime)s] %(message)s',
                         datefmt='%Y-%m-%d,%H:%M:%S',
                         level=logging.DEBUG)
+
+
+def print_log(message, silent=None):
+    if not silent:
+        print(message)
     logging.debug(message)

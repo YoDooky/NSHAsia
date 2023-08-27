@@ -1,3 +1,4 @@
+import time
 from typing import Tuple
 
 import aux_functions
@@ -22,4 +23,5 @@ class SkipTheory:
         progress = self.__get_progress()
         while progress[0] < progress[1]:
             self.aux_func.try_click(xpath=self.next_button_mask)
+            time.sleep(1)
             progress = self.__get_progress()

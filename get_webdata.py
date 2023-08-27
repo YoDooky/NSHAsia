@@ -23,27 +23,29 @@ class WebDataA:
         """Return current topic name"""
         self.aux_func.switch_to_frame()
         mask = self.TOPIC_MASK
-        topic_name = self.aux_func.try_get_text(xpath=mask, amount=1)
-        return topic_name
+        return self.__clean_text(self.aux_func.try_get_text(xpath=mask, amount=1))
 
     def get_question(self) -> str:
         """Returns question text"""
         self.aux_func.switch_to_frame(xpath='//*[@class="content_frame"]')
         mask = self.QUESTION_MASK
-        return self.aux_func.try_get_text(xpath=mask, amount=1)
+        return self.__clean_text(self.aux_func.try_get_text(xpath=mask, amount=1))
 
     def get_answers(self) -> List[str]:
         """Returns answers list"""
         self.aux_func.switch_to_frame(xpath='//*[@class="content_frame"]')
         mask = f'{self.ANSWERS_MASK}//*[@class="choice-content"]'
-        return [each for each in self.aux_func.try_get_text(xpath=mask)]
+        return [self.__clean_text(each) for each in self.aux_func.try_get_text(xpath=mask)]
 
     def get_link(self, answer_text: str) -> WebElement | None:
         """Returns webelement of answer (to click on it)"""
         self.aux_func.switch_to_frame(xpath='//*[@class="content_frame"]')
-        mask = f'{self.ANSWERS_MASK}//*[contains(text(),"{answer_text}")]'
+        driver = driver_init.BrowserDriver().browser
+        mask = f'{self.ANSWERS_MASK}//*[@class="choice-content"]'
         try:
-            return self.driver.find_element(By.XPATH, mask)
+            for element in driver.find_elements(By.XPATH, mask):
+                if element.text == answer_text:
+                    return element
         except NoSuchElementException:
             raise exceptions.NoFoundedElement(mask)
 
@@ -58,24 +60,27 @@ class WebDataA:
 
     def get_clicked_answers(self) -> List[str]:
         answers = self.get_answers()
-        mask = 'empty selector mask'
         data = []
+        driver = driver_init.BrowserDriver().browser
+        answer_text_mask = '//*[@class="choice-view"]//*[@class="choice-content"]'
+        answer_choice_mask = '//*[@class="choice-view"]//*[@class="choice-view__mock-active-element"]'
+        answers_data = zip(answers,
+                           driver.find_elements(By.XPATH, answer_text_mask),
+                           driver.find_elements(By.XPATH, answer_choice_mask))
         try:
-            for answer in answers:
-                mask = f'//*[@class="choice-view"]//*[contains(text(),"{answer}")]/' \
-                       f'ancestor::div[3]//*[@class="choice-view__mock-active-element"]'
-                selector = self.driver.find_element(By.XPATH, mask)
-                if selector.get_attribute('ariaChecked') == 'false':
+            for answer in answers_data:
+                if answer[1].text != answer[0]:
                     continue
-                data.append(answer)
+                if answer[2].get_attribute('ariaChecked') == 'false':
+                    continue
+                data.append(answer[0])
             return data
         except NoSuchElementException:
-            raise exceptions.NoFoundedElement(mask)
+            raise exceptions.NoFoundedElement(answer_choice_mask)
 
     @staticmethod
     def __clean_text(text: str) -> str:
-        """Clean text from whitespaces and \n"""
-        restricted_symbols = ['\n', '\t']
-        for symbol in restricted_symbols:
-            text = text.replace(symbol, ' ')
+        spec_symbols_accord = {'\xa0': ' ', '\u200b': ''}
+        for symbol in spec_symbols_accord:
+            text = text.replace(symbol, spec_symbols_accord.get(symbol))
         return ' '.join(text.split())

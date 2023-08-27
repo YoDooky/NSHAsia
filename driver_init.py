@@ -1,12 +1,14 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.chrome.options import Options
 import logging
-from config.folders import chromedriver_path
+from selenium.webdriver.remote.remote_connection import LOGGER
 
-logging.getLogger('urllib3').setLevel('CRITICAL')
-logging.getLogger('selenium').setLevel('CRITICAL')
+from config.folders import CHROMEDRIVER_PATH
+
+LOGGER.setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("selenium").setLevel(logging.WARNING)
 
 
 class BrowserDriver:
@@ -22,10 +24,7 @@ class BrowserDriver:
         BrowserDriver.__instance = None
 
     def _set_options(self):
-        DesiredCapabilities.CHROME['goog:loggingPrefs'] = {'performance': 'ALL'}
         options = Options()
-        # options.headless = True
-        # options.add_experimental_option("excludeSwitches", ["enable-logging"])
         options.add_argument('--log-level=3')
         options.add_argument("start-maximized")
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -40,6 +39,6 @@ class BrowserDriver:
         options.add_experimental_option("prefs", {
             "profile.default_content_setting_values.notifications": 1
         })
-        s = Service(chromedriver_path)
+        s = Service(CHROMEDRIVER_PATH)
         self.browser = webdriver.Chrome(service=s, options=options)
         self.browser.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")

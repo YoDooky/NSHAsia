@@ -1,3 +1,4 @@
+import logging
 import sys
 import time
 from typing import List
@@ -11,10 +12,8 @@ from threading import Thread, Lock
 import zipfile
 
 import driver_init
-from config.folders import music_path, alarm_music_path
+from config.folders import MUSIC_FILE_PATH, ALARM_FILE_PATH
 from log import print_log
-
-sys.tracebacklimit = 0
 
 
 class AuxFunc:
@@ -65,8 +64,7 @@ class AuxFunc:
                 return 1
             except Exception as ex:
                 if i >= try_numb - 1:
-                    print_log('[ERR] {0} Не смог кликнуть по элементу {1} в течении {2} попыток'.
-                              format(ex, xpath, try_numb), None, None, 1)
+                    logging.exception("An error occurred during trying to click")
                     break
                 time.sleep(1)
                 continue
@@ -80,8 +78,7 @@ class AuxFunc:
                     element = self.driver.find_elements(By.XPATH, xpath)
                 except Exception as ex:
                     if i >= try_numb - 1:
-                        print_log('[ERR] {0} Не смог получить текст элемента {1} в течении {2} попыток'.
-                                  format(ex, xpath, try_numb), None, None, 1)
+                        logging.exception("An error occurred during trying to get a bunch of text")
                     time.sleep(1)
                     continue
                 text_list = []
@@ -98,8 +95,7 @@ class AuxFunc:
                                 break
                         except Exception as ex:
                             if i >= try_numb - 1:
-                                print_log('[ERR] {0} Не смог получить текст элемента {1} в течении {2} '
-                                          'попыток'.format(ex, xpath, try_numb), None, None, 1)
+                                logging.exception("An error occurred during trying to get a bunch of text")
                             time.sleep(1)
                             break
                 else:  # если element пуст тогда ждем
@@ -110,8 +106,7 @@ class AuxFunc:
                     element = self.driver.find_element(By.XPATH, xpath)
                 except Exception as ex:
                     if i >= try_numb - 1:
-                        print_log('[ERR] {0} Не смог получить текст элемента {1} в течении {2} попыток'
-                                  .format(ex, xpath, try_numb), None, None, 1)
+                        logging.exception("An error occurred during trying to get a text")
                     time.sleep(1)
                     continue
                 if element:  # если element НЕ пуст. Иногда не успевает считаться значение, поэтому иначе будем ждать
@@ -120,8 +115,7 @@ class AuxFunc:
                             return element.get_attribute('innerText')
                     except Exception as ex:
                         if i >= try_numb - 1:
-                            print_log('[ERR] {0} Не смог получить текст элемента {1} в течении {2} попыток'
-                                      .format(ex, xpath, try_numb), None, None, 1)
+                            logging.exception("An error occurred during trying to get a text")
                         time.sleep(1)
                         continue
                 else:  # если element пуст тогда ждем
@@ -135,8 +129,7 @@ class AuxFunc:
                 return question_id
             except Exception as ex:
                 if i >= try_numb - 1:
-                    print_log('[ERR] {0} Не смог найти ID элемента {1} в течении {2} попыток'.
-                              format(ex, xpath, try_numb), None, None, 1)
+                    logging.exception("An error occurred during trying to get an element id")
                     break
                 time.sleep(1)
                 continue
@@ -149,8 +142,7 @@ class AuxFunc:
                 return question_id
             except Exception as ex:
                 if i >= try_numb - 1:
-                    print_log('[ERR] {0} Не смог найти ссылку на ID {1} в течении {2} попыток'.
-                              format(ex, question_id, try_numb), None, None, 1)
+                    logging.exception("An error occurred during trying to get an element link")
                     break
                 time.sleep(1)
                 continue
@@ -168,8 +160,7 @@ class AuxFunc:
                 break
             except Exception as ex:
                 if i >= try_numb - 1:
-                    print_log('[ERR] {0} Не смог перейти на фрейм {1} в течении {2} попыток'
-                              .format(ex, xpath, try_numb), None, None, 1)
+                    logging.exception("An error occurred during trying to switch to iframe")
                 time.sleep(1)
                 continue
 
@@ -201,12 +192,12 @@ def convert_time(time_in_sec):
 
 def sound_loop():
     while True:
-        playsound(alarm_music_path)
+        playsound(ALARM_FILE_PATH)
 
 
 def play_sound(self, alarm_type):
     if alarm_type == 1:  # если аларм не критичный (уведомление) то просто запускаем один раз звуковой файл
-        playsound(music_path)
+        playsound(MUSIC_FILE_PATH)
     elif alarm_type == 10:  # если аларм критичный то запускаем аларм в цикле в потоке
         thread = Thread(target=self.sound_loop)
         thread.start()

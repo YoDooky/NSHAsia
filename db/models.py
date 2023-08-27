@@ -45,12 +45,14 @@ class DbData(Base):
     __tablename__ = 'dbdatas'
 
     id = Column('id', Integer, primary_key=True)
+    topic = Column('topic', String)
     question = Column('question', String)
 
     answers = relationship('DbAnswer', back_populates='dbdata',
                            cascade='all, delete-orphan')  # last option to delete related table
 
-    def __init__(self, question: str):
+    def __init__(self, question: str, topic: str):
+        self.topic = topic
         self.question = question
 
 
@@ -66,3 +68,37 @@ class DbAnswer(Base):
     def __init__(self, text: str, dbdata: DbData):
         self.text = text
         self.dbdata = dbdata
+
+
+class TempDbData(Base):
+    __tablename__ = 'tempdbdatas'
+
+    id = Column('id', Integer, primary_key=True)
+    topic = Column('topic', String)
+    question = Column('question', String)
+    last_answer_combination = Column('last_answer_combination', Integer)
+    current_answer_combination = Column('current_answer_combination', Integer)
+
+    answers = relationship('TempDbAnswer', back_populates='tempdbdata',
+                           cascade='all, delete-orphan')  # last option to delete related table
+
+    def __init__(self, question: str, topic: str, last_answer_combination: int | None = None,
+                 current_answer_combination: int | None = None):
+        self.topic = topic
+        self.question = question
+        self.last_answer_combination = last_answer_combination
+        self.current_answer_combination = current_answer_combination
+
+
+class TempDbAnswer(Base):
+    __tablename__ = 'tempdbanswers'
+
+    id = Column('id', Integer, primary_key=True)
+    text = Column('text', String)
+
+    tempdbdata_id = Column(Integer, ForeignKey(f'{TempDbData.__tablename__}.id'))
+    tempdbdata = relationship(TempDbData.__name__, back_populates='answers')
+
+    def __init__(self, text: str, tempdbdata: TempDbData):
+        self.text = text
+        self.tempdbdata = tempdbdata
