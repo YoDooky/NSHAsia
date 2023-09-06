@@ -9,12 +9,10 @@ from logick.question_solve import QuestionSolve
 import driver_init
 from logick import skip_theory
 from web.xpaths import XpathResolver
-from web.get_webdata import WebDataA
 
 
 class TopicSolve:
     def __init__(self):
-        topic_name = WebDataA().get_topic_name()
         self.topic_xpath = XpathResolver()
 
     def main(self):
@@ -24,6 +22,7 @@ class TopicSolve:
 
         skip_theory.Theory().skip_theory()
         if not self.solve_topic():
+            AuxFunc().play_sound()
             res = input('Возникла ошибка при решении теста. Перейди на экран с тестом и нажми <Enter>.\n'
                         'Нажми <q> и после <Enter> для выхода')
             if not res:
@@ -75,7 +74,9 @@ class TopicSolve:
 
     def is_topic_passed(self):
         text = AuxFunc().try_get_text(xpath=self.topic_xpath.topic_score())
-        if int(text[-1].split('%')[0].strip()) >= int(text[-3].split('%')[0].strip()):
+        current_score = int(re.findall(r'\d+', text[-1])[0])
+        pass_score = int(re.findall(r'\d+', text[-3])[0])
+        if current_score >= pass_score:
             return True
         return False
 

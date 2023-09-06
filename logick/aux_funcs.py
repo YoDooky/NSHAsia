@@ -22,7 +22,7 @@ class CalculateVariants:
         amount = len(answers)
         combinations = self.get_possible_combinations(amount)
         prev_variant_num = self.validate_number(num=prev_variant_num, max_num=len(combinations) - 1)
-        TempDbDataController.update(id_=data.id, data={
+        TempDbDataController().update(id_=data.id, data={
             'current_answer_combination': prev_variant_num + 1})  # write current variant to db
         return [answers[num - 1] for num in combinations[prev_variant_num + 1]]
 

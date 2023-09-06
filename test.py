@@ -1,6 +1,5 @@
-import driver_init
-from web.xpaths import XpathResolver
+import re
 
-driver_init.BrowserDriver().browser.get('E:/Downloads/NSH_templates/type_1/init_state.mhtml')
-
-XpathResolver().iframe()
+text = "В этой строке есть 123 ифцвфцв 456."
+digits = re.findall(r'\d+', text)
+print(digits)

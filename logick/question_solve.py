@@ -15,7 +15,7 @@ from logick.aux_funcs import GenerateVariant, CalculateVariants
 
 def get_score():
     """Returns current topic score"""
-    mask = '//*[@class="quiz-top-panel__quiz-score-info quiz-top-panel__quiz-score-info_with-separator"]'
+    mask = XpathResolver().current_score()
     topic_score_text = AuxFunc().try_get_text(xpath=mask, amount=1, try_numb=2)
     return re.findall(r'\d+', topic_score_text)[0]
 
@@ -81,7 +81,6 @@ class AnswerChoice:
 
 class QuestionSolve:
     def __init__(self):
-        topic_name = WebDataA().get_topic_name()
         self.topic_xpath = XpathResolver()
 
     def solve_question(self):

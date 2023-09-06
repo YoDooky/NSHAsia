@@ -1,7 +1,7 @@
 import logging
 import sys
 import time
-from typing import List
+from typing import List, Union
 
 from playsound import playsound
 from selenium.webdriver.common.by import By
@@ -70,7 +70,7 @@ class AuxFunc:
                 continue
         return False
 
-    def try_get_text(self, xpath, amount=0, try_numb=10) -> str | List:
+    def try_get_text(self, xpath, amount=0, try_numb=10) -> Union[str, List]:
         """пытаемся извлечь текст из элемента"""
         for i in range(try_numb):
             if not amount:  # если нужно искать несколько элементов
@@ -140,56 +140,53 @@ class AuxFunc:
                 continue
         return False
 
+    def random_delay_timer(self, timer_multiply, lock=Lock()):
+        """Задержка с отображением оставшегося времени"""
+        delay = timer_multiply
+        for remaining in range(delay, 0, -1):
+            lock.acquire()
+            sys.stdout.write("\r")
+            rem_time = self.convert_time(remaining)
+            del_time = self.convert_time(delay)
+            sys.stdout.write("{:s} ({:2d} секунд) осталось из {:s} ({:2d} секунд)."
+                             .format(rem_time, remaining, del_time, delay))
+            sys.stdout.flush()
+            lock.release()
+            time.sleep(1)
+        sys.stdout.write("\rТаймер кончил за {:2d} секунд!            \n".format(delay))
+        print_log('Таймер кончил за {:2d} секунд!\n'.format(delay), None)
 
-def random_delay_timer(self, timer_multiply, lock=Lock()):
-    """Задержка с отображением оставшегося времени"""
-    delay = timer_multiply
-    for remaining in range(delay, 0, -1):
-        lock.acquire()
-        sys.stdout.write("\r")
-        rem_time = self.convert_time(remaining)
-        del_time = self.convert_time(delay)
-        sys.stdout.write("{:s} ({:2d} секунд) осталось из {:s} ({:2d} секунд)."
-                         .format(rem_time, remaining, del_time, delay))
-        sys.stdout.flush()
-        lock.release()
-        time.sleep(1)
-    sys.stdout.write("\rТаймер кончил за {:2d} секунд!            \n".format(delay))
-    print_log('Таймер кончил за {:2d} секунд!\n'.format(delay), None)
+    @staticmethod
+    def convert_time(time_in_sec):
+        """Функция для преобразования времени из SS в MM:SS"""
+        minutes = '{:02d}'.format(time_in_sec // 60)
+        seconds = '{:02d}'.format(time_in_sec % 60)
+        clock = minutes + ':' + seconds
+        return clock
 
+    @staticmethod
+    def sound_loop():
+        while True:
+            playsound(ALARM_FILE_PATH)
 
-def convert_time(time_in_sec):
-    """Функция для преобразования времени из SS в MM:SS"""
-    minutes = '{:02d}'.format(time_in_sec // 60)
-    seconds = '{:02d}'.format(time_in_sec % 60)
-    clock = minutes + ':' + seconds
-    return clock
+    def play_sound(self, alarm_type: int = 1):
+        if alarm_type == 1:  # если аларм не критичный (уведомление) то просто запускаем один раз звуковой файл
+            playsound(MUSIC_FILE_PATH)
+        elif alarm_type == 10:  # если аларм критичный то запускаем аларм в цикле в потоке
+            thread = Thread(target=self.sound_loop)
+            thread.start()
 
-
-def sound_loop():
-    while True:
-        playsound(ALARM_FILE_PATH)
-
-
-def play_sound(self, alarm_type):
-    if alarm_type == 1:  # если аларм не критичный (уведомление) то просто запускаем один раз звуковой файл
-        playsound(MUSIC_FILE_PATH)
-    elif alarm_type == 10:  # если аларм критичный то запускаем аларм в цикле в потоке
-        thread = Thread(target=self.sound_loop)
-        thread.start()
-
-
-def wait_for_user(self, err_message):
-    """ожидание ввода пользователя"""
-    print_log(err_message)
-    self.play_sound(1)
-    accept = input()
-    if accept == 'x':
-        sys.exit()
-    elif accept == 'z':
-        return 2
-    else:
-        return 1
+    def wait_for_user(self, err_message):
+        """ожидание ввода пользователя"""
+        print_log(err_message)
+        self.play_sound(1)
+        accept = input()
+        if accept == 'x':
+            sys.exit()
+        elif accept == 'z':
+            return 2
+        else:
+            return 1
 
 
 def database_permission(workbook, database, try_numb=100):

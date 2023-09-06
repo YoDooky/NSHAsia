@@ -1,16 +1,13 @@
-import time
 from typing import Tuple
+import re
 
 from aux_functions import AuxFunc
 from web.xpaths import XpathResolver
-from web.get_webdata import WebDataA
 
 
 class TheoryStrategy:
     def __init__(self):
-        topic_name = WebDataA().get_topic_name()
         self.topic_xpath = XpathResolver()
-        AuxFunc().switch_to_frame(xpath=self.topic_xpath.iframe())
 
     def __get_progress(self) -> Tuple[int, int]:
         """Returns slides progress"""
@@ -19,7 +16,8 @@ class TheoryStrategy:
                                                try_numb=5)
         if not progress_text:
             return 0, 0
-        return int(progress_text.split(sep='/')[0].strip()), int(progress_text.split(sep='/')[1].strip())
+        digits = re.findall(r'\d+', progress_text)
+        return int(digits[0]), int(digits[1])
 
     def skip_theory(self):
         """Skips all theory"""
@@ -28,6 +26,7 @@ class TheoryStrategy:
             AuxFunc().try_click(xpath=self.topic_xpath.next_theory())
             # time.sleep(1)
             progress = self.__get_progress()
+        AuxFunc().try_click(xpath=XpathResolver().start_button())
 
 
 class Theory(TheoryStrategy):
