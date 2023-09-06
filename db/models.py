@@ -12,7 +12,6 @@ class WebData(Base):
     topic = Column('topic', String)
     question = Column('question', String)
     is_radiobutton = Column('is_radiobutton', Integer)
-
     answers = relationship('WebAnswer', back_populates='webdata',
                            cascade='all, delete-orphan')  # last option to delete related table
 
@@ -29,16 +28,14 @@ class WebAnswer(Base):
     id = Column('id', Integer, primary_key=True)
     text = Column('text', String)
     is_selected = Column('is_selected', Integer)
-    is_correct = Column('is_correct', Integer)
 
     webdata_id = Column(Integer, ForeignKey(f'{WebData.__tablename__}.id'))
     webdata = relationship(WebData.__name__, back_populates='answers')
 
-    def __init__(self, text: str, webdata: WebData, is_selected: int = 0, is_correct: int = 0):
+    def __init__(self, text: str, webdata: WebData, is_selected: int = 0):
         self.text = text
         self.webdata = webdata
         self.is_selected = is_selected
-        self.is_correct = is_correct
 
 
 class DbData(Base):
@@ -61,13 +58,15 @@ class DbAnswer(Base):
 
     id = Column('id', Integer, primary_key=True)
     text = Column('text', String)
+    is_correct = Column('is_correct', Integer)
 
     dbdata_id = Column(Integer, ForeignKey(f'{DbData.__tablename__}.id'))
     dbdata = relationship(DbData.__name__, back_populates='answers')
 
-    def __init__(self, text: str, dbdata: DbData):
+    def __init__(self, text: str, dbdata: DbData, is_correct: int = 0):
         self.text = text
         self.dbdata = dbdata
+        self.is_correct = is_correct
 
 
 class TempDbData(Base):
@@ -102,3 +101,16 @@ class TempDbAnswer(Base):
     def __init__(self, text: str, tempdbdata: TempDbData):
         self.text = text
         self.tempdbdata = tempdbdata
+
+
+class Xpath(Base):
+    __tablename__ = 'xpaths'
+    id = Column('id', Integer, primary_key=True)
+    topic = Column('topic', String)
+    xpath = Column('xpath', String)
+    element = Column('element', String)
+
+    def __init__(self, topic: str, xpath: str, element: str):
+        self.topic = topic
+        self.xpath = xpath
+        self.element = element

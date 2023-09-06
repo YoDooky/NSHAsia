@@ -1,9 +1,9 @@
 import logging
-from typing import List, Dict
+from typing import List, Dict, Union
 from sqlalchemy import update, delete
-from db.models import WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer
+from db.models import WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath
 from db.database import session
-import get_webdata
+from web import get_webdata
 
 
 def write_webdata_to_db():
@@ -14,29 +14,38 @@ def write_webdata_to_db():
         question=webdata.get_question(),
         is_radiobutton=1 if webdata.get_selectors_type() == 'radio' else 0
     )
-    WebDataController().write_data(wd)
+    WebDataController().write(wd)
 
 
 class DataController:
     def __init__(self):
-        self.model = WebData | DbData | TempDbData
+        self.model = Union[WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath]
 
     @staticmethod
-    def write_data(data: DbData | DbAnswer | TempDbData | TempDbAnswer):
+    def write(data: Union[WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath]):
         session.add(data)
         session.commit()
 
-    def read_data(self) -> List[WebData | DbData | TempDbData]:
+    def read(self) -> List[Union[WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath]]:
         return session.query(self.model).all()
 
-    def delete_data(self, id_: int):
+    def update(self, id_: int, data: Dict):
+        stmt = update(self.model).values(data).where(self.model.id == id_)
+        try:
+            session.execute(stmt)
+            session.commit()
+        except Exception as ex:
+            session.rollback()
+            logging.exception(f"Error:\n    {ex}\nAn error occurred during update data from model: {self.model}")
+
+    def delete(self, id_: int):
         stmt = delete(self.model).where(self.model.id == id_)
         try:
             session.execute(stmt)
             session.commit()
         except Exception as ex:
             session.rollback()
-            logging.exception(f"An error occurred during delete data from model: {self.model}")
+            logging.exception(f"Error:\n    {ex}\nAn error occurred during delete data from model: {self.model}")
 
 
 class WebDataController(DataController):
@@ -46,7 +55,7 @@ class WebDataController(DataController):
         super().__init__()
         self.model = WebData
 
-    def write_data(self, data: WebData):
+    def write(self, data: WebData):
         self.wipe_table()
         session.add(data)
         WebAnswerController().write_data(data)
@@ -67,13 +76,11 @@ class WebAnswerController:
         webdata = get_webdata.WebDataA()
         answers = webdata.get_answers()
         selected_answers = webdata.get_clicked_answers()
-        correct_answers = DbDataController().read_correct_answers(question=related_data.question)
         for answer in answers:
             session.add(WebAnswer(
                 text=answer,
                 webdata=related_data,
-                is_selected=1 if answer in selected_answers else 0,
-                is_correct=1 if answer in correct_answers else 0
+                is_selected=1 if answer in selected_answers else 0
             ))
 
 
@@ -85,7 +92,7 @@ class DbDataController(DataController):
         self.model = DbData
 
     def read_correct_answers(self, question: str) -> List[str]:
-        full_data = self.read_data()
+        full_data = self.read()
         for data in full_data:
             if data.question == question:
                 return [answer.text for answer in data.answers]
@@ -93,7 +100,9 @@ class DbDataController(DataController):
 
 
 class DbAnswerController(DataController):
-    pass
+    def __init__(self):
+        super().__init__()
+        self.model = DbAnswer
 
 
 class TempDbDataController(DataController):
@@ -101,16 +110,14 @@ class TempDbDataController(DataController):
         super().__init__()
         self.model = TempDbData
 
-    @staticmethod
-    def update_data(id_: int, data: Dict):
-        stmt = update(TempDbData).values(data).where(TempDbData.id == id_)
-        try:
-            session.execute(stmt)
-            session.commit()
-        except Exception as ex:
-            session.rollback()
-            logging.exception("An error occurred during update data from model: TempDbData")
-
 
 class TempDbAnswerController(DataController):
-    pass
+    def __init__(self):
+        super().__init__()
+        self.model = TempDbAnswer
+
+
+class XpathController(DataController):
+    def __init__(self):
+        super().__init__()
+        self.model = Xpath

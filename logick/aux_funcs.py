@@ -22,7 +22,7 @@ class CalculateVariants:
         amount = len(answers)
         combinations = self.get_possible_combinations(amount)
         prev_variant_num = self.validate_number(num=prev_variant_num, max_num=len(combinations) - 1)
-        TempDbDataController.update_data(id_=data.id, data={
+        TempDbDataController.update(id_=data.id, data={
             'current_answer_combination': prev_variant_num + 1})  # write current variant to db
         return [answers[num - 1] for num in combinations[prev_variant_num + 1]]
 
@@ -58,7 +58,7 @@ class GenerateVariant:
     def generate(webdata: WebData) -> str:
         """Writes new question and answers to temp db and returns first answer variant"""
         temp_data = TempDbData(question=webdata.question, topic=webdata.topic, current_answer_combination=0)
-        TempDbDataController.write_data(temp_data)
+        TempDbDataController.write(temp_data)
         for answer in webdata.answers:
-            TempDbAnswerController.write_data(TempDbAnswer(text=answer.text, tempdbdata=temp_data))
+            TempDbAnswerController.write(TempDbAnswer(text=answer.text, tempdbdata=temp_data))
         return webdata.answers[0].text

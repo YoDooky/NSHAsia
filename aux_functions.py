@@ -21,30 +21,30 @@ class AuxFunc:
     def __init__(self):
         self.driver = driver_init.BrowserDriver().browser
 
-    def wait_element_load(self, xpath, timeout=10):
+    def wait_element_load(self, xpath, timeout=10) -> bool:
         """задержка для того чтобы загрузились скрипты, ajax и прочее гавно"""
         try:
             WebDriverWait(self.driver, timeout).until(ec.presence_of_element_located((By.XPATH, xpath)))
-            return 1
+            return True
         except TimeoutException:
             print_log(f'[ERR] Не смог дождаться загрузки элемента {xpath} в течении '
-                      f'{timeout} секунд', None, None, 1)
-            return 0
+                      f'{timeout} секунд', None)
+            return False
 
-    def wait_window_load_and_switch(self, window_number, timeout=5):
+    def wait_window_load_and_switch(self, window_number, timeout=5) -> bool:
         """функция ожидания загрузки окон и переключения на целевое окно (1й аргумент функции)"""
         try:
             self.driver.implicitly_wait(timeout)
             WebDriverWait(self.driver, timeout).until(ec.number_of_windows_to_be(window_number + 1))
             self.driver.switch_to.window(self.driver.window_handles[window_number])
             self.driver.implicitly_wait(timeout)
-            return 1
+            return True
         except TimeoutException:
             print_log(f'[ERR] Не смог переключиться на окно №{window_number + 1} в течении '
-                      f'{timeout} секунд', None, None, 1)
-            return 0
+                      f'{timeout} секунд', None)
+            return False
 
-    def try_click(self, xpath, element=0, window_numb=None, try_numb=10, scroll_to=True):
+    def try_click(self, xpath, element=0, window_numb=None, try_numb=10, scroll_to=True) -> bool:
         """функция для попыток клика по элементу"""
         for i in range(try_numb):
             try:
@@ -61,14 +61,14 @@ class AuxFunc:
                     self.driver.find_elements(By.XPATH, xpath)[element].click()
                 else:
                     self.driver.find_element(By.XPATH, xpath).click()
-                return 1
+                return True
             except Exception as ex:
                 if i >= try_numb - 1:
                     logging.exception("An error occurred during trying to click")
                     break
                 time.sleep(1)
                 continue
-        return 0
+        return False
 
     def try_get_text(self, xpath, amount=0, try_numb=10) -> str | List:
         """пытаемся извлечь текст из элемента"""
@@ -122,32 +122,7 @@ class AuxFunc:
                     time.sleep(1)
                     continue
 
-    def try_get_id(self, xpath, try_numb=10):
-        for i in range(try_numb):
-            try:
-                question_id = self.driver.find_elements(By.XPATH, xpath)
-                return question_id
-            except Exception as ex:
-                if i >= try_numb - 1:
-                    logging.exception("An error occurred during trying to get an element id")
-                    break
-                time.sleep(1)
-                continue
-
-    def try_get_link(self, question_id, try_numb=10):
-        answer_link_mask = "//*[@data-quiz-uid='" + question_id + "']//div//table//tbody//tr//td//div//span"
-        for i in range(try_numb):
-            try:
-                question_id = self.driver.find_elements(By.XPATH, answer_link_mask)
-                return question_id
-            except Exception as ex:
-                if i >= try_numb - 1:
-                    logging.exception("An error occurred during trying to get an element link")
-                    break
-                time.sleep(1)
-                continue
-
-    def switch_to_frame(self, xpath=None, try_numb: int = 10, windows_numb: int = 1):
+    def switch_to_frame(self, xpath=None, try_numb: int = 10, windows_numb: int = 1) -> bool:
         """функция для переключения на фрейм"""
         for i in range(try_numb):  # пробуем переключиться на тест
             try:
@@ -157,12 +132,13 @@ class AuxFunc:
                 self.driver.implicitly_wait(1)
                 if xpath:
                     self.driver.switch_to.frame(self.driver.find_element(By.XPATH, xpath))
-                break
+                return True
             except Exception as ex:
                 if i >= try_numb - 1:
                     logging.exception("An error occurred during trying to switch to iframe")
                 time.sleep(1)
                 continue
+        return False
 
 
 def random_delay_timer(self, timer_multiply, lock=Lock()):
@@ -179,7 +155,7 @@ def random_delay_timer(self, timer_multiply, lock=Lock()):
         lock.release()
         time.sleep(1)
     sys.stdout.write("\rТаймер кончил за {:2d} секунд!            \n".format(delay))
-    print_log('Таймер кончил за {:2d} секунд!\n'.format(delay), None, None, 1)
+    print_log('Таймер кончил за {:2d} секунд!\n'.format(delay), None)
 
 
 def convert_time(time_in_sec):
