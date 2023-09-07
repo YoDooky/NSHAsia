@@ -127,7 +127,7 @@ class XpathResolver:
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=True)
+    @select_xpath_decorator(has_exception=False)
     def next_theory():
         """Button <Далее> for the theory"""
         return [
@@ -166,7 +166,7 @@ class XpathResolver:
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=True)
+    @select_xpath_decorator(has_exception=False)
     def theory_progress():
         """Theory progress label <X из X>"""
         return [
