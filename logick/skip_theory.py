@@ -1,7 +1,9 @@
-from typing import Tuple
 import re
+import time
+from typing import Tuple
 
 from aux_functions import AuxFunc
+from logick.aux_funcs import RandomDelay
 from web.xpaths import XpathResolver
 
 
@@ -24,7 +26,7 @@ class TheoryStrategy:
         progress = self.__get_progress()
         while progress[0] < progress[1]:
             AuxFunc().try_click(xpath=self.topic_xpath.next_theory())
-            # time.sleep(1)
+            time.sleep(RandomDelay.get_theory_delay())
             progress = self.__get_progress()
         AuxFunc().try_click(xpath=XpathResolver().start_button())
 

@@ -3,15 +3,23 @@ from random import randint
 from typing import List
 
 from config.read_config import read_config_file
-from exceptions import MaxVariantsExceeded
-from db.models import WebData, TempDbData, TempDbAnswer
 from db.controllers import TempDbDataController, TempDbAnswerController
+from db.models import WebData, TempDbData, TempDbAnswer
+from exceptions import MaxVariantsExceeded
 
 
-def get_random_delay():
-    """Returns randomly 0.5 to 1 parts of delay from config file"""
-    config_delay = int(read_config_file()['answer_delay'])
-    return randint(int(config_delay / 2), config_delay)
+class RandomDelay:
+    @staticmethod
+    def get_question_delay():
+        """Returns randomly 0.5 to 1 parts of delay from config file"""
+        delay = int(read_config_file()['answer_delay'])
+        return randint(int(delay / 2), delay)
+
+    @staticmethod
+    def get_theory_delay():
+        """Returns randomly 0.5 to 1 parts of delay from config file"""
+        delay = int(read_config_file()['theory_delay'])
+        return randint(int(delay / 2), delay)
 
 
 class CalculateVariants:

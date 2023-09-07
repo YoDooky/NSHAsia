@@ -1,12 +1,11 @@
 import logging
 import time
-
-from selenium.webdriver.remote.webelement import WebElement
 from typing import List
 
-from aux_functions import AuxFunc
+from selenium.webdriver.remote.webelement import WebElement
+
 from exceptions import ImpossibleToClick
-from logick.aux_funcs import get_random_delay
+from logick.aux_funcs import RandomDelay
 
 
 def click_answer(links: List[WebElement]):
@@ -15,7 +14,7 @@ def click_answer(links: List[WebElement]):
     for link in links:
         for i in range(try_numb):
             try:
-                time.sleep(get_random_delay())
+                time.sleep(RandomDelay.get_question_delay())
                 link.click()
             except Exception:
                 print(f'Не удалось кликнуть по ответу. Попытка {i + 1} из {try_numb}')
@@ -23,4 +22,3 @@ def click_answer(links: List[WebElement]):
             finally:
                 return
     raise ImpossibleToClick
-
