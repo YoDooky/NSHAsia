@@ -7,8 +7,9 @@ from log import print_log
 from aux_functions import AuxFunc
 from logick.question_solve import QuestionSolve
 import driver_init
-from logick import skip_theory
 from web.xpaths import XpathResolver
+from logick.strategy import TheorySolveStrategy
+from logick.skip_theory import TheoryA
 
 
 class TopicSolve:
@@ -20,7 +21,7 @@ class TopicSolve:
 
         AuxFunc().switch_to_frame(xpath=self.topic_xpath.iframe())
 
-        skip_theory.Theory().skip_theory()
+        TheorySolveStrategy(TheoryA()).do_work()
         if not self.solve_topic():
             AuxFunc().play_sound()
             res = input('Возникла ошибка при решении теста. Перейди на экран с тестом и нажми <Enter>.\n'
@@ -73,10 +74,10 @@ class TopicSolve:
         return False
 
     def is_topic_passed(self):
-        text = AuxFunc().try_get_text(xpath=self.topic_xpath.topic_score())
-        current_score = int(re.findall(r'\d+', text[-1])[0])
-        pass_score = int(re.findall(r'\d+', text[-3])[0])
-        if current_score >= pass_score:
+        text = AuxFunc().try_get_text(xpath=self.topic_xpath.topic_score(), amount=1)
+        # current_score = int(re.findall(r'\d+', text[-1])[0])
+        # pass_score = int(re.findall(r'\d+', text[-3])[0])
+        if ' не ' not in text:
             return True
         return False
 

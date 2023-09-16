@@ -1,9 +1,4 @@
-import time
-from typing import Tuple
-
-import aux_functions
-
-from skip_theory import TheoryStrategy
+from logick.skip_theory import TheoryStrategy
 
 
 class TheorySolveStrategy:

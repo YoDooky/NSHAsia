@@ -1,22 +1,26 @@
 import time
 
+from selenium.webdriver import ActionChains
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
+
+from typing import List
+
+from aux_functions import AuxFunc
+import db
+from exceptions import NoFoundedElement
 
 import driver_init
-from aux_functions import AuxFunc
-from db.controllers import XpathController
-from db.models import Xpath
-from exceptions import NoFoundedElement
-from web.get_webdata import WebDataA
 
 
 # DECORATOR
-def select_xpath_decorator(has_exception: bool = True):
+def xpath_decorator(has_exception: bool = True):
     """DECORATOR. Writes xpath for current topic to db"""
 
     def upper_wrapper(func):
         def wrapper(*args):
-            topic_name = WebDataA().get_topic_name()
+            topic_url = WebDataA().get_topic_url()
             driver = driver_init.BrowserDriver().browser
 
             # focus to frame
@@ -24,13 +28,16 @@ def select_xpath_decorator(has_exception: bool = True):
                 AuxFunc().switch_to_frame(xpath=XpathResolver().iframe())
 
             # find xpath in db
-            xpathdb_data = XpathController().read()
+            xpathdb_data = db.XpathController().read()
             for data in xpathdb_data:
-                if data.topic != topic_name:
+                if data.url != topic_url:
                     continue
                 if data.element != func.__name__:
                     continue
                 return data.xpath
+
+            actions = ActionChains(driver)
+            actions.move_by_offset(0, 0).click().perform()
 
             # find xpath in method and write it if it corrects to db
             masks = func(*args)
@@ -39,7 +46,7 @@ def select_xpath_decorator(has_exception: bool = True):
                     # validate xpath for correctness
                     try:
                         driver.find_element(By.XPATH, mask)
-                        XpathController().write(Xpath(topic=topic_name, xpath=mask, element=func.__name__))
+                        db.XpathController().write(db.Xpath(url=topic_url, xpath=mask, element=func.__name__))
                         return mask
                     except Exception:
                         time.sleep(1)
@@ -55,7 +62,7 @@ class XpathResolver:
     """Base class for webelements"""
 
     @staticmethod
-    @select_xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=True)
     def iframe():
         """iframe"""
         return [
@@ -63,63 +70,77 @@ class XpathResolver:
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=True)
     def results_button():
         """Button <СМОТРЕТЬ РЕЗУЛЬТАТЫ>"""
         return [
             '//*[@class="quiz-control-panel__container quiz-control-panel__container_right"]//'
-            'button[@class="quiz-control-panel__button"]//*[contains(text(),"СМОТРЕТЬ РЕЗУЛЬТАТЫ")]',
+            'button[@class="quiz-control-panel__button"]'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"СМОТРЕТЬ РЕЗУЛЬТАТЫ")]',
 
             '//*[@class="quiz-control-panel__container quiz-control-panel__container_right"]'
             '//button[@class="quiz-uikit-primary-button quiz-uikit-primary-button_size_medium"]'
-            '//*[contains(text(),"СМОТРЕТЬ РЕЗУЛЬТАТЫ")]'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"СМОТРЕТЬ РЕЗУЛЬТАТЫ")]'
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=False)
+    @xpath_decorator(has_exception=False)
     def start_button():
         """Button <НАЧАТЬ ТЕСТ>"""
         return [
             '//button[@class="quiz-uikit-primary-button quiz-uikit-primary-button_size_medium"]'
-            '//*[contains(text(),"НАЧАТЬ ТЕСТ")]',
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"НАЧАТЬ ТЕСТ")]',
 
             '//button[@class="quiz-control-panel__button quiz-control-panel__button_right-arrow quiz-control-panel'
-            '__button_show-arrow"]//*[contains(text(),"НАЧАТЬ ТЕСТ")]'
+            '__button_show-arrow"]'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"НАЧАТЬ ТЕСТ")]'
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=True)
     def answer_button():
         """Button <ОТВЕТИТЬ>"""
         return [
-            '//button[@class="quiz-control-panel__button"]//*[contains(text(),"ОТВЕТИТЬ")]',
+            '//button[@class="quiz-control-panel__button"]'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"ОТВЕТИТЬ")]',
 
             '//button[@class="quiz-uikit-primary-button quiz-uikit-primary-button_size_medium"]'
-            '//*[contains(text(),"ОТВЕТИТЬ")]'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"ОТВЕТИТЬ")]'
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=True)
     def continue_button():
         """Button <ПРОДОЛЖИТЬ> after click <ОТВЕТИТЬ> done"""
         return [
             '//button[@class="quiz-control-panel__button quiz-control-panel__button_right-arrow '
-            'quiz-control-panel__button_show-arrow"]//*[contains(text(),"ПРОДОЛЖИТЬ")]',
+            'quiz-control-panel__button_show-arrow"]'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"ПРОДОЛЖИТЬ")]',
 
             '//button[@class="quiz-uikit-primary-button quiz-uikit-primary-button_size_medium"]'
-            '//*[contains(text(),"ПРОДОЛЖИТЬ")]'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"ПРОДОЛЖИТЬ")]'
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=True)
     def repeat_button():
         """Button <Повторить тест>"""
         return [
-            '//*[@class="player-shape-view player-shape-view_button"]//*[contains(text(),"ПОВТОРИТЬ ТЕСТ")]'
+            '//*[@class="player-shape-view player-shape-view_button"]'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"ПОВТОРИТЬ ТЕСТ")]'
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=True)
     def popup_approve():
         """Button <Да> in pop-up window to resume quiz"""
         return [
@@ -127,7 +148,7 @@ class XpathResolver:
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=False)
+    @xpath_decorator(has_exception=False)
     def next_theory():
         """Button <Далее> for the theory"""
         return [
@@ -139,7 +160,7 @@ class XpathResolver:
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=True)
     def questions_progress():
         """Questions amount label <Вопрос X из X>"""
         return [
@@ -149,7 +170,7 @@ class XpathResolver:
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=True)
     def current_score():
         """Current topic score on the bottom of the page"""
         return [
@@ -158,15 +179,27 @@ class XpathResolver:
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=False)
+    def answer_result():
+        """Answer result (correct or not correct)"""
+        return [
+            '//*[@class="quiz-feedback-panel"]',
+
+            '//*[@class="quiz-feedback-panel__header"]'
+        ]
+
+    @staticmethod
+    @xpath_decorator(has_exception=True)
     def topic_score():
         """Question score label at the end of the topic"""
         return [
             '//*[@class="player-shape-view"]'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"ТЕСТ")]'
         ]
 
     @staticmethod
-    @select_xpath_decorator(has_exception=False)
+    @xpath_decorator(has_exception=False)
     def theory_progress():
         """Theory progress label <X из X>"""
         return [
@@ -174,3 +207,118 @@ class XpathResolver:
 
             '//*[@class="navigation-controls__label"]'
         ]
+
+    # WebData
+    @staticmethod
+    # @select_xpath_decorator(has_exception=True)
+    def topic_name():
+        """Name of current topic"""
+        return '//*[@id="contentItemTitle"]'
+
+    @staticmethod
+    @xpath_decorator(has_exception=True)
+    def question_text():
+        """Question of current topic"""
+        return [
+            '//*[@class="published-rich-text player-shape-view__shape-view-rich-text-view '
+            'published-rich-text_wrap-text player-shape-view__shape-view-rich-text-view_wrap-text"]'
+        ]
+
+    @staticmethod
+    @xpath_decorator(has_exception=True)
+    def answer_text():
+        """Answers of current topic"""
+        return [
+            '//*[@class="choice-view"]//*[@class="choice-content"]',
+
+            '//*[@class="choice-view__choice-container"]//*[@class="choice-content"]'
+        ]
+
+    @staticmethod
+    @xpath_decorator(has_exception=True)
+    def answer_choice_type():
+        """Type of answers selectors of current topic"""
+        return [
+            '//*[@class="choice-view"]//*[@class="choice-view__mock-active-element"]',
+
+            '//*[@class="choice-view__choice-container"]//*[@class="choice-view__mock-active-element"]'
+        ]
+
+
+class WebDataA:
+
+    def __init__(self):
+        self.driver = driver_init.BrowserDriver().browser
+        self.aux_func = AuxFunc()
+
+    def get_topic_name(self) -> str:
+        """Return current topic name"""
+        self.aux_func.switch_to_frame()
+        mask = XpathResolver.topic_name()
+        return self.__clean_text(self.aux_func.try_get_text(xpath=mask, amount=1))
+
+    def get_topic_url(self) -> str:
+        """Return topic URL"""
+        self.aux_func.switch_to_frame()
+        mask = XpathResolver.topic_name()
+        return self.aux_func.try_get_attribute(xpath=mask, attribute='baseURI')
+
+    def get_question(self) -> str:
+        """Returns question text"""
+        self.aux_func.switch_to_frame(xpath=XpathResolver.iframe())
+        mask = XpathResolver.question_text()
+        return self.__clean_text(self.aux_func.try_get_text(xpath=mask, amount=1))
+
+    def get_answers(self) -> List[str]:
+        """Returns answers list"""
+        self.aux_func.switch_to_frame(xpath=XpathResolver.iframe())
+        mask = XpathResolver.answer_text()
+        return [self.__clean_text(each) for each in self.aux_func.try_get_text(xpath=mask)]
+
+    def get_link(self, answer_text: str) -> WebElement | None:
+        """Returns webelement of answer (to click on it)"""
+        self.aux_func.switch_to_frame(xpath=XpathResolver.iframe())
+        driver = driver_init.BrowserDriver().browser
+        mask = XpathResolver.answer_text()
+        try:
+            for element in driver.find_elements(By.XPATH, mask):
+                if element.text == answer_text:
+                    return element
+        except NoSuchElementException:
+            raise NoFoundedElement(mask)
+
+    def get_selectors_type(self) -> str:
+        """Returns type of selectors via checking firs founded element (radiobutton or checkbox)"""
+        self.aux_func.switch_to_frame(xpath=XpathResolver.iframe())
+        mask = XpathResolver.answer_choice_type()
+        try:
+            return self.driver.find_element(By.XPATH, mask).get_attribute('type')
+        except NoSuchElementException:
+            raise NoFoundedElement(mask)
+
+    def get_clicked_answers(self) -> List[str]:
+        answers = self.get_answers()
+        data = []
+        driver = driver_init.BrowserDriver().browser
+        answer_text_mask = XpathResolver.answer_text()
+        answer_choice_mask = XpathResolver.answer_choice_type()
+        answers_data = zip(answers,
+                           driver.find_elements(By.XPATH, answer_text_mask),
+                           driver.find_elements(By.XPATH, answer_choice_mask))
+        try:
+            for answer in answers_data:
+                if answer[1].text != answer[0]:
+                    continue
+                if answer[2].get_attribute('ariaChecked') == 'false':
+                    continue
+                data.append(answer[0])
+            return data
+        except NoSuchElementException:
+            raise NoFoundedElement(answer_choice_mask)
+
+    @staticmethod
+    def __clean_text(text: str) -> str:
+        spec_symbols_accord = {'\xa0': ' ', '\u200B': ''}
+        for symbol in spec_symbols_accord:
+            text = text.replace(symbol, spec_symbols_accord.get(symbol))
+        return ' '.join(text.split())

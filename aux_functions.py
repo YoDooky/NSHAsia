@@ -122,6 +122,17 @@ class AuxFunc:
                     time.sleep(1)
                     continue
 
+    def try_get_attribute(self, xpath: str, attribute: str, try_numb: int = 5) -> str:
+        """Return target attribute of web element"""
+        for i in range(try_numb):
+            try:
+                element = self.driver.find_element(By.XPATH, xpath).get_attribute(attribute)
+                return element
+            except Exception:
+                time.sleep(1)
+                continue
+        logging.exception("An error occurred during trying to get an attribute of text")
+
     def switch_to_frame(self, xpath=None, try_numb: int = 10, windows_numb: int = 1) -> bool:
         """функция для переключения на фрейм"""
         for i in range(try_numb):  # пробуем переключиться на тест

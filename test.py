@@ -1,5 +1,9 @@
-import re
+def func():
+    return [
+        '//*[@class="player-shape-view"]'
+        '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+        '"ТЕСТ")]'
+    ]
 
-text = "В этой строке есть 123 ифцвфцв 456."
-digits = re.findall(r'\d+', text)
-print(digits)
+
+print(func())

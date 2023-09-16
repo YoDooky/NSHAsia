@@ -1,23 +1,20 @@
-import re
+# import re
 from selenium.webdriver.remote.webelement import WebElement
 from typing import List
 
-from db.controllers import DbDataController, DbAnswerController, WebDataController, TempDbDataController, \
-    write_webdata_to_db
-from db.models import WebData, DbData, DbAnswer, TempDbData
-from logick.click import click_answer
-from web.get_webdata import WebDataA
-from web.xpaths import XpathResolver
+from db import DbDataController, DbAnswerController, WebDataController, TempDbDataController, write_webdata_to_db, \
+    WebData, DbData, DbAnswer, TempDbData
+from logick import GenerateVariant, CalculateVariants, click_answer
+from web.xpaths import WebDataA, XpathResolver
 from aux_functions import AuxFunc
 from log import print_log
-from logick.aux_funcs import GenerateVariant, CalculateVariants
 
 
-def get_score():
-    """Returns current topic score"""
-    mask = XpathResolver().current_score()
-    topic_score_text = AuxFunc().try_get_text(xpath=mask, amount=1, try_numb=2)
-    return re.findall(r'\d+', topic_score_text)[0]
+# def get_score():
+#     """Returns current topic score"""
+#     mask = XpathResolver().current_score()
+#     topic_score_text = AuxFunc().try_get_text(xpath=mask, amount=1, try_numb=2)
+#     return re.findall(r'\d+', topic_score_text)[0]
 
 
 def validate_db_data(main_data: WebData | DbData | TempDbData, comp_data: WebData | DbData | TempDbData) -> bool:
@@ -86,15 +83,16 @@ class QuestionSolve:
     def solve_question(self):
         write_webdata_to_db()
         links = AnswerChoice().get_right_answers_links()
-        start_score = get_score()
+        # start_score = get_score()
 
         click_answer(links)
         AuxFunc().try_click(xpath=self.topic_xpath.answer_button())  # click <ОТВЕТИТЬ> button
 
         # check results
-        if start_score == get_score():
+        answer_result = AuxFunc().try_get_text(xpath=XpathResolver().answer_result(), amount=1).lower().replace(' ', '')
+        if 'неправильно' in answer_result:
             self.write_if_wrong_result()
-        elif start_score < get_score():
+        elif 'правильно' in answer_result:
             self.write_if_correct_result()
 
     @staticmethod

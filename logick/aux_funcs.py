@@ -3,8 +3,7 @@ from random import randint
 from typing import List
 
 from config.read_config import read_config_file
-from db.controllers import TempDbDataController, TempDbAnswerController
-from db.models import WebData, TempDbData, TempDbAnswer
+from db import TempDbDataController, TempDbAnswerController, WebData, TempDbData, TempDbAnswer
 from exceptions import MaxVariantsExceeded
 
 

@@ -16,9 +16,9 @@ def click_answer(links: List[WebElement]):
             try:
                 time.sleep(RandomDelay.get_question_delay())
                 link.click()
+                break
             except Exception:
                 print(f'Не удалось кликнуть по ответу. Попытка {i + 1} из {try_numb}')
                 logging.exception("An error occurred during click to answer")
-            finally:
-                return
-    raise ImpossibleToClick
+            if i >= try_numb - 1:
+                raise ImpossibleToClick

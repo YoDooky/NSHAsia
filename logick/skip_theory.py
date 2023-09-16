@@ -1,35 +1,39 @@
-import re
 import time
-from typing import Tuple
 
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.by import By
+
+import driver_init
 from aux_functions import AuxFunc
-from logick.aux_funcs import RandomDelay
 from web.xpaths import XpathResolver
+from logick.aux_funcs import RandomDelay
 
 
 class TheoryStrategy:
-    def __init__(self):
-        self.topic_xpath = XpathResolver()
 
-    def __get_progress(self) -> Tuple[int, int]:
-        """Returns slides progress"""
-        progress_text = AuxFunc().try_get_text(xpath=self.topic_xpath.theory_progress(),
-                                               amount=1,
-                                               try_numb=5)
-        if not progress_text:
-            return 0, 0
-        digits = re.findall(r'\d+', progress_text)
-        return int(digits[0]), int(digits[1])
-
-    def skip_theory(self):
+    @staticmethod
+    def skip_theory():
         """Skips all theory"""
-        progress = self.__get_progress()
-        while progress[0] < progress[1]:
-            AuxFunc().try_click(xpath=self.topic_xpath.next_theory())
-            time.sleep(RandomDelay.get_theory_delay())
-            progress = self.__get_progress()
-        AuxFunc().try_click(xpath=XpathResolver().start_button())
+        driver = driver_init.BrowserDriver().browser
+        next_theory_button = XpathResolver().next_theory()
+        while True:
+            try:
+                driver.find_element(By.XPATH, next_theory_button)
+                time.sleep(RandomDelay.get_theory_delay())
+                actions = ActionChains(driver)
+                actions.move_by_offset(0, 0).click().perform()
+                AuxFunc().try_click(xpath=next_theory_button)
+            except Exception:
+                break
+        AuxFunc().try_click(xpath=XpathResolver().start_button(), try_numb=3)
 
 
-class Theory(TheoryStrategy):
+class TheoryA(TheoryStrategy):
+    """Solving theory in tests where theory progress is exist"""
     pass
+
+#
+# class TheoryB(TheoryStrategy):
+#     """Solving theory in tests where theory progress doesn't exist
+#     Solves theory while button next_theory is existed"""
+#     pass

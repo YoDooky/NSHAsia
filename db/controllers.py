@@ -3,11 +3,11 @@ from typing import List, Dict, Union
 from sqlalchemy import update, delete
 from db.models import WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath
 from db.database import session
-from web import get_webdata
+from web import WebDataA
 
 
 def write_webdata_to_db():
-    webdata = get_webdata.WebDataA()
+    webdata = WebDataA()
     wd = WebData(
         user='',
         topic=webdata.get_topic_name(),
@@ -73,7 +73,7 @@ class WebDataController(DataController):
 class WebAnswerController:
     @staticmethod
     def write_data(related_data: WebData):
-        webdata = get_webdata.WebDataA()
+        webdata = WebDataA()
         answers = webdata.get_answers()
         selected_answers = webdata.get_clicked_answers()
         for answer in answers:

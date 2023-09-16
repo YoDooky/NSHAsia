@@ -106,11 +106,11 @@ class TempDbAnswer(Base):
 class Xpath(Base):
     __tablename__ = 'xpaths'
     id = Column('id', Integer, primary_key=True)
-    topic = Column('topic', String)
+    url = Column('url', String)
     xpath = Column('xpath', String)
     element = Column('element', String)
 
-    def __init__(self, topic: str, xpath: str, element: str):
-        self.topic = topic
+    def __init__(self, url: str, xpath: str, element: str):
+        self.url = url
         self.xpath = xpath
         self.element = element
