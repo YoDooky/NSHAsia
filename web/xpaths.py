@@ -115,7 +115,7 @@ class XpathResolver:
         ]
 
     @staticmethod
-    @xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=False)
     def continue_button():
         """Button <ПРОДОЛЖИТЬ> after click <ОТВЕТИТЬ> done"""
         return [
@@ -170,12 +170,15 @@ class XpathResolver:
         ]
 
     @staticmethod
-    @xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=False)
     def current_score():
         """Current topic score on the bottom of the page"""
         return [
             '//*[@class="quiz-top-panel__quiz-score-info quiz-top-panel__quiz-score-info_with-separator"]',
-            '//*[@class="quiz-control-panel__quiz-score-info"]'
+
+            '//*[@class="quiz-control-panel__quiz-score-info"]',
+
+            '//*[@class="quiz-top-panel__quiz-score-info"]'
         ]
 
     @staticmethod

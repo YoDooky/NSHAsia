@@ -27,3 +27,10 @@ class NoDataToWrite(Exception):
     def __init__(self):
         super().__init__(
             f'Во временной базе данных нет правильных ответов для записи в постоянную базу')
+
+
+class NoAnswerResult(Exception):
+    """Exception for question solve result"""
+
+    def __init__(self):
+        super().__init__('Не могу оценить результат решения вопроса (правильно/неправильно)')

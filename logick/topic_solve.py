@@ -3,18 +3,23 @@ import time
 from selenium.webdriver import ActionChains
 import logging
 
+# from app_types import Strategies
 from log import print_log
 from aux_functions import AuxFunc
 from logick.question_solve import QuestionSolve
 import driver_init
 from web.xpaths import XpathResolver
-from logick.strategy import TheorySolveStrategy
-from logick.skip_theory import TheoryA
+from logick.strat.strategy import TheorySolveStrategy
+from logick.strat.skip_theory import TheoryA
 
 
 class TopicSolve:
     def __init__(self):
         self.topic_xpath = XpathResolver()
+        self.last_questions_left = None
+        # self.strategies: Strategies = Strategies(
+        #     question_solve_result=None, theory_skip=None
+        # )
 
     def main(self):
         input('Перейди на экран с выбранной темой и нажми <Enter>')
@@ -53,10 +58,11 @@ class TopicSolve:
     def solve_question(self, num: int):
         """Solve current question"""
         if num != 0:
-            last_questions_left = self.get_questions_left()
             self.click_next_button(self.topic_xpath.continue_button())
-            if not self.wait_next_question(last_questions_left):
+            if not self.wait_next_question(self.last_questions_left):
                 self.reboot_question_page()
+        self.last_questions_left = self.get_questions_left()
+        # QuestionSolve(self.strategies).solve_question()
         QuestionSolve().solve_question()
 
     def click_next_button(self, mask: str):

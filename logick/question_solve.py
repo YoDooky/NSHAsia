@@ -1,20 +1,18 @@
 # import re
+from typing import Union
+
 from selenium.webdriver.remote.webelement import WebElement
 from typing import List
 
+# from app_types import Strategies
 from db import DbDataController, DbAnswerController, WebDataController, TempDbDataController, write_webdata_to_db, \
     WebData, DbData, DbAnswer, TempDbData
 from logick import GenerateVariant, CalculateVariants, click_answer
+from logick.strat.find_answer_result import ResultStrategyA, ResultStrategyB
+from logick.strat.strategy import AnswerResultStrategy
 from web.xpaths import WebDataA, XpathResolver
 from aux_functions import AuxFunc
 from log import print_log
-
-
-# def get_score():
-#     """Returns current topic score"""
-#     mask = XpathResolver().current_score()
-#     topic_score_text = AuxFunc().try_get_text(xpath=mask, amount=1, try_numb=2)
-#     return re.findall(r'\d+', topic_score_text)[0]
 
 
 def validate_db_data(main_data: WebData | DbData | TempDbData, comp_data: WebData | DbData | TempDbData) -> bool:
@@ -77,23 +75,37 @@ class AnswerChoice:
 
 
 class QuestionSolve:
+    # def __init__(self, strategies: Strategies):
+    #     self.topic_xpath = XpathResolver()
+    #     self.strategies = strategies
     def __init__(self):
         self.topic_xpath = XpathResolver()
 
     def solve_question(self):
         write_webdata_to_db()
         links = AnswerChoice().get_right_answers_links()
-        # start_score = get_score()
 
+        start_score = ResultStrategyB().get_result_text()  # trying to get current topic result (if it exists)
         click_answer(links)
         AuxFunc().try_click(xpath=self.topic_xpath.answer_button())  # click <ОТВЕТИТЬ> button
 
-        # check results
-        answer_result = AuxFunc().try_get_text(xpath=XpathResolver().answer_result(), amount=1).lower().replace(' ', '')
-        if 'неправильно' in answer_result:
-            self.write_if_wrong_result()
-        elif 'правильно' in answer_result:
+        if self.get_result(start_score):
             self.write_if_correct_result()
+        self.write_if_wrong_result()
+
+    def get_result(self, start_score: Union[int, None]):
+        """Returns question solve result"""
+        if start_score is None:
+            # self.strategies = Strategies(
+            #     question_solve_result=ResultStrategyA(),
+            #     theory_skip=None
+            # )
+            return AnswerResultStrategy(ResultStrategyA()).do_work()
+        # self.strategies = Strategies(
+        #     question_solve_result=ResultStrategyB,
+        #     theory_skip=None
+        # )
+        return AnswerResultStrategy(ResultStrategyB()).do_work()
 
     @staticmethod
     def write_if_wrong_result():
