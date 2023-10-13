@@ -28,7 +28,7 @@ class CalculateVariants:
         answers = [answer.text for answer in data.answers]
         amount = len(answers)
         combinations = self.get_possible_combinations(amount)
-        prev_variant_num = self.validate_number(num=prev_variant_num, max_num=len(combinations) - 1)
+        prev_variant_num = self.validate_number(num=prev_variant_num, max_num=len(combinations) - 1, data_id=data.id)
         TempDbDataController().update(id_=data.id, data={
             'current_answer_combination': prev_variant_num + 1})  # write current variant to db
         return [answers[num - 1] for num in combinations[prev_variant_num + 1]]
@@ -49,12 +49,13 @@ class CalculateVariants:
         return combinations
 
     @staticmethod
-    def validate_number(num: int, max_num: int):
+    def validate_number(num: int, max_num: int, data_id: int):
         if num is None:
             return 0
         if num <= 0:
             return 0
         if num >= max_num:
+            TempDbDataController().delete(id_=data_id)  # write current variant to db
             raise MaxVariantsExceeded
         return num
 
@@ -69,3 +70,11 @@ class GenerateVariant:
         for answer in webdata.answers:
             TempDbAnswerController.write(TempDbAnswer(text=answer.text, tempdbdata=temp_data))
         return webdata.answers[0].text
+
+
+# def clean_text(text: str) -> str:
+#     """Clears text spec symbols"""
+#     spec_symbols_accord = {'\xa0': ' ', '\u200B': ''}
+#     for symbol in spec_symbols_accord:
+#         text = text.replace(symbol, spec_symbols_accord.get(symbol))
+#     return ' '.join(text.split())

@@ -63,7 +63,7 @@ class DbAnswer(Base):
     dbdata_id = Column(Integer, ForeignKey(f'{DbData.__tablename__}.id'))
     dbdata = relationship(DbData.__name__, back_populates='answers')
 
-    def __init__(self, text: str, dbdata: DbData, is_correct: int = 0):
+    def __init__(self, text: str, dbdata: DbData, is_correct: int):
         self.text = text
         self.dbdata = dbdata
         self.is_correct = is_correct

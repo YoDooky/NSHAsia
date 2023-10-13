@@ -4,6 +4,7 @@ import time
 from typing import List, Union
 
 from playsound import playsound
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
@@ -31,25 +32,18 @@ class AuxFunc:
                       f'{timeout} секунд', None)
             return False
 
-    def wait_window_load_and_switch(self, window_number, timeout=5) -> bool:
-        """функция ожидания загрузки окон и переключения на целевое окно (1й аргумент функции)"""
-        try:
-            self.driver.implicitly_wait(timeout)
-            WebDriverWait(self.driver, timeout).until(ec.number_of_windows_to_be(window_number + 1))
-            self.driver.switch_to.window(self.driver.window_handles[window_number])
-            self.driver.implicitly_wait(timeout)
-            return True
-        except TimeoutException:
-            print_log(f'[ERR] Не смог переключиться на окно №{window_number + 1} в течении '
-                      f'{timeout} секунд', None)
-            return False
-
     def try_click(self, xpath, element=0, window_numb=None, try_numb=10, scroll_to=True) -> bool:
         """функция для попыток клика по элементу"""
         for i in range(try_numb):
             try:
                 if window_numb is not None:
-                    self.driver.switch_to.window(self.driver.window_handles[window_numb])
+                    # self.driver.switch_to.window(self.driver.window_handles[window_numb])
+                    # self.driver.switch_to.window(self.driver.window_handles[-1])
+                    self.switch_to_frame('//*[@class="content_frame"]')
+                    # perform click
+                    driver = driver_init.BrowserDriver().browser
+                    actions = ActionChains(driver)
+                    actions.move_by_offset(0, 0).click().perform()
                 if scroll_to:
                     run_button_element = self.driver.find_element(By.XPATH, xpath)
                     self.driver.execute_script("arguments[0].scrollIntoView(true);", run_button_element)
@@ -133,13 +127,14 @@ class AuxFunc:
                 continue
         logging.exception("An error occurred during trying to get an attribute of text")
 
-    def switch_to_frame(self, xpath=None, try_numb: int = 10, windows_numb: int = 1) -> bool:
+    def switch_to_frame(self, xpath=None, try_numb: int = 10) -> bool:
         """функция для переключения на фрейм"""
         for i in range(try_numb):  # пробуем переключиться на тест
             try:
                 self.driver.implicitly_wait(1)
-                WebDriverWait(self.driver, 1).until(ec.number_of_windows_to_be(windows_numb))
-                self.driver.switch_to.window(self.driver.window_handles[windows_numb - 1])
+                # WebDriverWait(self.driver, 1).until(ec.number_of_windows_to_be(windows_numb))
+                # self.driver.switch_to.window(self.driver.window_handles[windows_numb - 1])
+                self.driver.switch_to.window(self.driver.window_handles[-1])
                 self.driver.implicitly_wait(1)
                 if xpath:
                     self.driver.switch_to.frame(self.driver.find_element(By.XPATH, xpath))

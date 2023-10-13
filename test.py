@@ -1,27 +1,18 @@
-class Base:
-    def prnt(self):
-        print('Sup')
+def is_page_src():
+    compare_counter = 1
+
+    def compare_str(last_str: str, current_str: str):
+        nonlocal compare_counter
+        if last_str == current_str:
+            compare_counter += 1
+            return
+        compare_counter = 0
+
+    return compare_str
 
 
-class Child1(Base):
-    pass
-
-
-class Child2(Base):
-    pass
-
-
-class GrandChild(Child1):
-    pass
-
-
-# Получаем все подклассы класса Base
-def get_subclasses(cls):
-    subclasses = cls.__subclasses__()
-    for subclass in subclasses:
-        subclasses.extend(get_subclasses(subclass))
-    return subclasses
-
-
-for subclass in Base.__subclasses__():
-    subclass().prnt()
+pg_src = is_page_src()
+for i in range(10):
+    str1 = 'test2'
+    str2 = 'test2'
+    pg_src(last_str=str2, current_str=str1)

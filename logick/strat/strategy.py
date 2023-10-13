@@ -1,11 +1,12 @@
-from logick.strat.find_answer_result import ResultStrategy
-from logick.strat.question_solve import QuestionStrategy
-from logick.strat.skip_theory import TheoryStrategy
+from typing import Type
+
+from logick import strat
 
 
 class TheorySolveStrategy:
     """Strategy for theory solving"""
-    def __init__(self, strategy: TheoryStrategy):
+
+    def __init__(self, strategy: strat.TheoryStrategy):
         self.strategy = strategy
 
     def do_work(self):
@@ -14,18 +15,19 @@ class TheorySolveStrategy:
 
 class QuestionSolveStrategy:
     """Strategy for solving questions"""
-    def __init__(self, strategy: QuestionStrategy):
+
+    def __init__(self, strategy: Type[strat.QuestionStrategy]):
+        self.strategy = strategy
+
+    def do_work(self, questions_left: int):
+        return self.strategy(questions_left).solve_question()
+
+
+class TopicSolveStrategy:
+    """Strategy for solving topic"""
+
+    def __init__(self, strategy: Type[strat.TopicStrategy]):
         self.strategy = strategy
 
     def do_work(self):
-        return self.strategy.solve_question()
-
-
-class AnswerResultStrategy:
-    """Strategy for finding question solve result"""
-
-    def __init__(self, strategy: ResultStrategy):
-        self.strategy = strategy
-
-    def do_work(self):
-        return self.strategy.find_result()
+        return self.strategy().main()

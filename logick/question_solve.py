@@ -1,17 +1,13 @@
-# import re
-from typing import Union
+from typing import Type, Union
 
 from selenium.webdriver.remote.webelement import WebElement
 from typing import List
 
-# from app_types import Strategies
-from db import DbDataController, DbAnswerController, WebDataController, TempDbDataController, write_webdata_to_db, \
-    WebData, DbData, DbAnswer, TempDbData
-from logick import GenerateVariant, CalculateVariants, click_answer
-from logick.strat.find_answer_result import ResultStrategyA, ResultStrategyB
-from logick.strat.strategy import AnswerResultStrategy
-from web.xpaths import WebDataA, XpathResolver
-from aux_functions import AuxFunc
+from db import DbDataController, WebDataController, TempDbDataController, \
+    WebData, DbData, TempDbData
+from logick import GenerateVariant, CalculateVariants, strat
+
+from web.xpaths import WebDataA
 from log import print_log
 
 
@@ -75,80 +71,20 @@ class AnswerChoice:
 
 
 class QuestionSolve:
-    # def __init__(self, strategies: Strategies):
-    #     self.topic_xpath = XpathResolver()
-    #     self.strategies = strategies
-    def __init__(self):
-        self.topic_xpath = XpathResolver()
+    def __init__(self, strategy: Union[Type[strat.QuestionStrategy], None], questions_left: int = 0):
+        self.strategy = strategy
+        self.questions_left = questions_left
 
-    def solve_question(self):
-        write_webdata_to_db()
-        links = AnswerChoice().get_right_answers_links()
+    def solve_question(self) -> Type[strat.QuestionStrategy]:
+        if self.strategy is None:
+            self.define_strategy()
+        strat.QuestionSolveStrategy(self.strategy).do_work(self.questions_left)
+        return self.strategy
 
-        start_score = ResultStrategyB().get_result_text()  # trying to get current topic result (if it exists)
-        click_answer(links)
-        AuxFunc().try_click(xpath=self.topic_xpath.answer_button())  # click <ОТВЕТИТЬ> button
-
-        if self.get_result(start_score):
-            self.write_if_correct_result()
-        self.write_if_wrong_result()
-
-    def get_result(self, start_score: Union[int, None]):
-        """Returns question solve result"""
-        if start_score is None:
-            # self.strategies = Strategies(
-            #     question_solve_result=ResultStrategyA(),
-            #     theory_skip=None
-            # )
-            return AnswerResultStrategy(ResultStrategyA()).do_work()
-        # self.strategies = Strategies(
-        #     question_solve_result=ResultStrategyB,
-        #     theory_skip=None
-        # )
-        return AnswerResultStrategy(ResultStrategyB()).do_work()
-
-    @staticmethod
-    def write_if_wrong_result():
-        """Update answer combination in temp db"""
-        print_log('X  Ответ неверный')
-        web_data = WebDataController().read()
-        temp_data = TempDbDataController().read()
-        for temp in temp_data:
-            if not validate_db_data(main_data=temp, comp_data=web_data[0]):
-                continue
-            TempDbDataController().update(id_=temp.id,
-                                          data={'last_answer_combination': temp.current_answer_combination})
-
-    def write_if_correct_result(self):
-        """Writes corrects data to db and delete it from temp db"""
-        print_log('✔  Ответ правильный')
-        write_webdata_to_db()  # update data to write selected answers
-        web_data = WebDataController().read()
-        if self.validate_data(web_data):  # if there is same question don't write to db
-            return
-        db_data = DbData(question=web_data[0].question, topic=web_data[0].topic)
-        DbDataController.write(db_data)
-        for answer in web_data[0].answers:
-            DbAnswerController.write(DbAnswer(text=answer.text,
-                                              dbdata=db_data,
-                                              is_correct=1 if answer.is_selected else 0))
-        self.clear_tempdb_question(web_data)
-
-    @staticmethod
-    def clear_tempdb_question(web_data):
-        """Check for same data in temp db and delete it"""
-        temp_data = TempDbDataController().read()
-        for temp in temp_data:
-            if not validate_db_data(main_data=temp, comp_data=web_data[0]):
-                continue
-            TempDbDataController().delete(temp.id)
-
-    @staticmethod
-    def validate_data(web_data):
-        """Check for same data in db with correct answers"""
-        db_data = DbDataController().read()
-        for db in db_data:
-            if not validate_db_data(main_data=db, comp_data=web_data[0]):
-                continue
-            return True
-        return False
+    def define_strategy(self):
+        """Find demand question solve strategy for current topic depending on founded xpath (current_score)"""
+        try:
+            strat.QuestionStrategyB(self.questions_left).get_result_data()
+            self.strategy = strat.QuestionStrategyB
+        except IndexError:
+            self.strategy = strat.QuestionStrategyA

@@ -20,8 +20,9 @@ def xpath_decorator(has_exception: bool = True):
 
     def upper_wrapper(func):
         def wrapper(*args):
-            topic_url = WebDataA().get_topic_url()
             driver = driver_init.BrowserDriver().browser
+            driver.switch_to.window(driver.window_handles[-1])
+            topic_url = WebDataA().get_topic_url()
 
             # focus to frame
             if func.__name__ != 'iframe':
@@ -36,6 +37,7 @@ def xpath_decorator(has_exception: bool = True):
                     continue
                 return data.xpath
 
+            # perform click
             actions = ActionChains(driver)
             actions.move_by_offset(0, 0).click().perform()
 
@@ -66,7 +68,9 @@ class XpathResolver:
     def iframe():
         """iframe"""
         return [
-            '//*[@class="content_frame"]'
+            '//*[@class="content_frame"]',
+
+            '//*[@class="scorm_content"]//iframe'
         ]
 
     @staticmethod
@@ -119,6 +123,11 @@ class XpathResolver:
     def continue_button():
         """Button <ПРОДОЛЖИТЬ> after click <ОТВЕТИТЬ> done"""
         return [
+            '//button[@class="quiz-uikit-primary-button quiz-uikit-primary-button_size_medium" '
+            'and not(@style="display: none;")]'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"ПРОДОЛЖИТЬ")]',
+
             '//button[@class="quiz-control-panel__button quiz-control-panel__button_right-arrow '
             'quiz-control-panel__button_show-arrow"]'
             '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
@@ -160,6 +169,18 @@ class XpathResolver:
         ]
 
     @staticmethod
+    @xpath_decorator(has_exception=False)
+    def next_test_part():
+        """Button <ДАЛЕЕ> for topics where is many theory and test"""
+        return [
+            '//*[@class="quiz-uikit-primary-button quiz-uikit-primary-button_size_medium"][last()]'
+            '//*[contains(text(),"ДАЛЕЕ")]',
+
+            '//*[@class="quiz-uikit-primary-button quiz-uikit-primary-button_size_medium"]'
+            '//*[contains(text(),"ДАЛЕЕ")]'
+        ]
+
+    @staticmethod
     @xpath_decorator(has_exception=True)
     def questions_progress():
         """Questions amount label <Вопрос X из X>"""
@@ -172,7 +193,7 @@ class XpathResolver:
     @staticmethod
     @xpath_decorator(has_exception=False)
     def current_score():
-        """Current topic score on the bottom of the page"""
+        """Current topic score"""
         return [
             '//*[@class="quiz-top-panel__quiz-score-info quiz-top-panel__quiz-score-info_with-separator"]',
 
@@ -285,7 +306,7 @@ class WebDataA:
         mask = XpathResolver.answer_text()
         try:
             for element in driver.find_elements(By.XPATH, mask):
-                if element.text == answer_text:
+                if self.__clean_text(element.text) == answer_text:
                     return element
         except NoSuchElementException:
             raise NoFoundedElement(mask)
@@ -310,7 +331,7 @@ class WebDataA:
                            driver.find_elements(By.XPATH, answer_choice_mask))
         try:
             for answer in answers_data:
-                if answer[1].text != answer[0]:
+                if self.__clean_text(answer[1].text) != answer[0]:
                     continue
                 if answer[2].get_attribute('ariaChecked') == 'false':
                     continue

@@ -6,14 +6,15 @@ from logick.topic_solve import TopicSolve
 if __name__ == '__main__':
     init_logging_config()  # initiate logging config
     Folders.init_folders()
-    driver_init.BrowserDriver().browser.get('https://pnsh.ispringlearn.ru/courses')
-    # driver_init.BrowserDriver().browser.get('C:/Users/user/Downloads/5_test.html')
+    # driver_init.BrowserDriver().browser.get('https://pnsh.ispringlearn.ru/courses')
+    driver_init.BrowserDriver().browser.get('https://ucpermoil.ispringlearn.ru/courses')
+    # driver_init.BrowserDriver().browser.get('C:/Users/user/Downloads/tests/Подготовительные работы.html')
 
     print('<<<<<    25.08.2023. NSHAsia rev.0.0.2  >>>>>')  # version description
 
     repeat = ''
     while repeat != 'q':
-        repeat = input('Нажми <Enter> чтобы решить следующую тему петушок. Нажми <q> для выхода')
+        repeat = input('Нажми <Enter> чтобы решить следующую тему петушок.')
         if repeat == 'q':
             break
         TopicSolve().main()
