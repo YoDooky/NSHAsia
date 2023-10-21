@@ -1,5 +1,5 @@
 import logging
-from config.folders import LOG_FILE_PATH
+from config import LOG_FILE_PATH
 
 
 def init_logging_config():

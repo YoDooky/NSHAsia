@@ -36,6 +36,6 @@ Folders.init_folders()
 
 MUSIC_FILE_PATH = f'{Folders.AUDIO_PATH}/heyuser.mp3'  # путь до звукового файла
 ALARM_FILE_PATH = f'{Folders.AUDIO_PATH}/alarm.mp3'  # путь до звукового файла с пиздец каким алармом
-CHROMEDRIVER_PATH = f'{Folders.DRIVER_PATH}/chromedriver.exe'
+CHROMEDRIVER_PATH = f'{Folders.DRIVER_PATH}/chromedriver-win64/chromedriver.exe'
 CONFIG_FILE_PATH = f'{Folders.CONFIG_PATH}/config.txt'
 LOG_FILE_PATH = f'{Folders.LOG_PATH}/log.txt'

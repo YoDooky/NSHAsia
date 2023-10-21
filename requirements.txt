@@ -1,6 +1,9 @@
-selenium
+selenium~=4.14.0
 openpyxl
 playsound==1.2.2
 pyinstaller
 pyTelegramBotAPI
-sqlalchemy
+sqlalchemy~=1.4.41
+requests~=2.31.0
+beautifulsoup4~=4.12.2
+lxml==4.9.1

@@ -1,4 +1,4 @@
-from config.folders import CONFIG_FILE_PATH
+from config.init_folders import CONFIG_FILE_PATH
 
 
 def read_config_file():

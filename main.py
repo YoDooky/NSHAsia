@@ -1,16 +1,17 @@
+import log
 from log import init_logging_config
-from config.folders import Folders
+import config
 import driver_init
 from logick.topic_solve import TopicSolve
 
 if __name__ == '__main__':
     init_logging_config()  # initiate logging config
-    Folders.init_folders()
+    config.Folders.init_folders()
     driver_init.BrowserDriver().browser.get('https://pnsh.ispringlearn.ru/courses')
     # driver_init.BrowserDriver().browser.get('https://ucpermoil.ispringlearn.ru/courses')
     # driver_init.BrowserDriver().browser.get('C:/Users/user/Downloads/tests/Подготовительные работы.html')
 
-    print('<<<<<    25.08.2023. NSHAsia rev.0.0.2  >>>>>')  # version description
+    print('<<<<<    20.10.2023. NSHAsia rev.0.0.5  >>>>>')  # version description
 
     repeat = ''
     while repeat != 'q':

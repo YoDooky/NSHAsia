@@ -1,5 +1,7 @@
 import re
 import time
+from typing import Union
+
 from selenium.webdriver import ActionChains
 import logging
 # from typing import Type, Union
@@ -42,7 +44,7 @@ class TopicStrategy:
 
     def solve_topic(self) -> bool:
         """Solve current topic"""
-        print_log("--> Решаю тест")
+        print_log("\n\n\n--> РЕШАЮ ТЕСТ")
         try:
             AuxFunc().switch_to_frame(xpath=XpathResolver().iframe())
             questions_left = self.get_questions_left()
@@ -96,12 +98,15 @@ class TopicStrategy:
             return True
         return False
 
-    @staticmethod
-    def get_questions_left() -> int:
-        """Returns questions left from current topic"""
-        text = AuxFunc().try_get_text(xpath=XpathResolver().questions_progress(), amount=1)
-        number_list = [int(number) for number in re.findall(r'\d+', text)]
-        return number_list[-1] - number_list[0]
+    # @staticmethod
+    # def get_questions_left() -> Union[int, None]:
+    #     """Returns questions left from current topic"""
+    #     text = AuxFunc().try_get_text(xpath=XpathResolver().questions_progress(), amount=1)
+    #     try:
+    #         number_list = [int(number) for number in re.findall(r'\d+', text)]
+    #     except Exception as ex:
+    #         return None
+    #     return number_list[-1] - number_list[0]
 
     @staticmethod
     def reboot_question_page() -> None:

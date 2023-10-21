@@ -1,10 +1,11 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import WebDriverException
 import logging
 from selenium.webdriver.remote.remote_connection import LOGGER
 
-from config.folders import CHROMEDRIVER_PATH
+from config.init_folders import CHROMEDRIVER_PATH
 
 LOGGER.setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -39,6 +40,5 @@ class BrowserDriver:
         options.add_experimental_option("prefs", {
             "profile.default_content_setting_values.notifications": 1
         })
-        s = Service(CHROMEDRIVER_PATH)
-        self.browser = webdriver.Chrome(service=s, options=options)
+        self.browser = webdriver.Chrome(options=options)
         self.browser.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")

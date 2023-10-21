@@ -13,9 +13,9 @@ from threading import Thread, Lock
 import zipfile
 
 import driver_init
-from config.folders import MUSIC_FILE_PATH, ALARM_FILE_PATH
+from config.init_folders import MUSIC_FILE_PATH, ALARM_FILE_PATH
 from log import print_log
-
+import web
 
 class AuxFunc:
 
@@ -39,7 +39,7 @@ class AuxFunc:
                 if window_numb is not None:
                     # self.driver.switch_to.window(self.driver.window_handles[window_numb])
                     # self.driver.switch_to.window(self.driver.window_handles[-1])
-                    self.switch_to_frame('//*[@class="content_frame"]')
+                    self.switch_to_frame(web.XpathResolver().iframe())
                     # perform click
                     driver = driver_init.BrowserDriver().browser
                     actions = ActionChains(driver)

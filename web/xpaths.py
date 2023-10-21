@@ -95,7 +95,7 @@ class XpathResolver:
         """Button <НАЧАТЬ ТЕСТ>"""
         return [
             '//button[@class="quiz-uikit-primary-button quiz-uikit-primary-button_size_medium"]'
-            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '//*[   абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
             '"НАЧАТЬ ТЕСТ")]',
 
             '//button[@class="quiz-control-panel__button quiz-control-panel__button_right-arrow quiz-control-panel'
@@ -185,7 +185,8 @@ class XpathResolver:
     def questions_progress():
         """Questions amount label <Вопрос X из X>"""
         return [
-            '//*[@class="quiz-top-panel__question-score-info quiz-top-panel__question-score-info_with-separator"]',
+            '//*[@class="quiz-top-panel__question-score-info quiz-top-panel__question-score-info_with-separator" '
+            'and not(@style="display: none;")]',
 
             '//*[@class="quiz-control-panel__question-score-info"]'
         ]
