@@ -1,14 +1,12 @@
-import re
 import time
-from typing import Union
 
 from selenium.webdriver import ActionChains
 import logging
-# from typing import Type, Union
 
+from exceptions import QuizEnded
 from log import print_log
 from aux_functions import AuxFunc
-import driver_init
+from driver_init import driver
 from web.xpaths import XpathResolver
 
 from logick import strat, question_solve
@@ -16,7 +14,7 @@ from logick import strat, question_solve
 
 class TopicStrategy:
     def __init__(self):
-        self.last_questions_left = None
+        self.last_question_text = None
         self.question_strategy = None
         self.has_next_button = True  # define if topic has <ПРОДОЛЖИТЬ> button after cliked <ОТВЕТИТЬ> button
 
@@ -46,10 +44,22 @@ class TopicStrategy:
         """Solve current topic"""
         print_log("\n\n\n--> РЕШАЮ ТЕСТ")
         try:
+            question_num = 0
+            self.has_next_button = True
             AuxFunc().switch_to_frame(xpath=XpathResolver().iframe())
-            questions_left = self.get_questions_left()
-            for i in range(questions_left + 1):
-                self.solve_question(i)
+
+            # while there is question on page, continue solving
+            while AuxFunc().try_get_text(
+                    xpath=XpathResolver().question_text(),
+                    amount=1,
+                    try_numb=2
+            ):
+                try:
+                    self.solve_question(question_num)
+                except QuizEnded:
+                    break
+                question_num += 1
+
             self.click_next_button(XpathResolver().results_button())
 
             if self.is_topic_passed():
@@ -69,18 +79,22 @@ class TopicStrategy:
         if num != 0:
             if self.has_next_button is True:
                 self.has_next_button = self.click_next_button(XpathResolver().continue_button())
-            if not self.is_next_question(self.last_questions_left):  # if next question not loaded, reload page
-                self.reboot_question_page()
-        self.last_questions_left = self.get_questions_left()
+            if not self.is_next_question(self.last_question_text):  # if next question not loaded, reload page
+                if AuxFunc().try_get_text(xpath=XpathResolver().continue_button(), try_numb=3):
+                    raise QuizEnded
+                if AuxFunc().try_get_text(xpath=XpathResolver().results_button(), try_numb=3):
+                    raise QuizEnded
 
-        q_solve = question_solve.QuestionSolve(strategy=self.question_strategy, questions_left=self.last_questions_left)
+        q_solve = question_solve.QuestionSolve(strategy=self.question_strategy)
         self.question_strategy = q_solve.solve_question()  # remember question solving strategy for current topic
+
+        self.last_question_text = AuxFunc().try_get_text(
+            XpathResolver().question_text())  # remember last question page
 
     @staticmethod
     def click_next_button(mask: str):
         """Click button"""
         AuxFunc().switch_to_frame(xpath=XpathResolver().iframe())
-        driver = driver_init.BrowserDriver().browser
         actions = ActionChains(driver)
         try_numb = 5
         for i in range(try_numb):
@@ -98,32 +112,26 @@ class TopicStrategy:
             return True
         return False
 
-    # @staticmethod
-    # def get_questions_left() -> Union[int, None]:
-    #     """Returns questions left from current topic"""
-    #     text = AuxFunc().try_get_text(xpath=XpathResolver().questions_progress(), amount=1)
-    #     try:
-    #         number_list = [int(number) for number in re.findall(r'\d+', text)]
-    #     except Exception as ex:
-    #         return None
-    #     return number_list[-1] - number_list[0]
-
     @staticmethod
     def reboot_question_page() -> None:
         """Reboot question page"""
-        driver = driver_init.BrowserDriver().browser
         driver.refresh()
         driver.switch_to.alert.accept()
         AuxFunc().switch_to_frame(xpath=XpathResolver().iframe())
         AuxFunc().try_click(xpath=XpathResolver().popup_approve())
 
-    def is_next_question(self, last_questions_left) -> bool:
+    def is_next_question(self, last_questions_text: str) -> bool:
         """Wait next question load"""
-        for x in range(20):
-            if last_questions_left == self.get_questions_left():
+        for x in range(1, 4):
+            current_question_text = AuxFunc().try_get_text(XpathResolver().question_text())
+            if current_question_text is None:
+                return False
+            if last_questions_text == current_question_text:
                 time.sleep(1)
             else:
                 return True
+            if x % 5 == 0:  # every 5 try reload page
+                self.reboot_question_page()
         return False
 
 

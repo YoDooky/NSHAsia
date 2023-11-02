@@ -13,8 +13,8 @@ from log import print_log
 
 
 class QuestionStrategy:
-    def __init__(self, questions_left: int):
-        self.questions_left = questions_left
+    def __init__(self):
+        pass
 
     def solve_question(self):
         write_webdata_to_db()
@@ -103,8 +103,8 @@ class QuestionStrategyB(QuestionStrategy):
     """Question strategy for topics where the result (правильно/неправильно) of question solve doesn't exist
     and topic score (набрано балов X из X) is existed"""
 
-    def __init__(self, questions_left: int):
-        super().__init__(questions_left)
+    def __init__(self):
+        super().__init__()
         self.start_score = None
 
     def solve_question(self):
@@ -128,7 +128,7 @@ class QuestionStrategyB(QuestionStrategy):
     def get_result_data() -> Union[int, None]:
         """Returns current topic score"""
         mask = XpathResolver().current_score()
-        topic_score_text = AuxFunc().try_get_text(xpath=mask, amount=1, try_numb=2)  # ЗДЕСь ЛУЧШЕ ПОМЕНЯТЬ СТРАТЕГИЮ
+        topic_score_text = AuxFunc().try_get_text(xpath=mask, amount=1, try_numb=2)  # ЗДЕСЬ ЛУЧШЕ ПОМЕНЯТЬ СТРАТЕГИЮ
         if topic_score_text is None:
             return None
         return int(re.findall(r'\d+', topic_score_text)[0])

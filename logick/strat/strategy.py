@@ -19,8 +19,8 @@ class QuestionSolveStrategy:
     def __init__(self, strategy: Type[strat.QuestionStrategy]):
         self.strategy = strategy
 
-    def do_work(self, questions_left: int):
-        return self.strategy(questions_left).solve_question()
+    def do_work(self):
+        return self.strategy().solve_question()
 
 
 class TopicSolveStrategy:

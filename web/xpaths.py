@@ -7,11 +7,12 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from typing import List
 
-from aux_functions import AuxFunc
+# from aux_functions import AuxFunc
+import aux_functions as af
 import db
 from exceptions import NoFoundedElement
 
-import driver_init
+from driver_init import driver
 
 
 # DECORATOR
@@ -20,13 +21,12 @@ def xpath_decorator(has_exception: bool = True):
 
     def upper_wrapper(func):
         def wrapper(*args):
-            driver = driver_init.BrowserDriver().browser
             driver.switch_to.window(driver.window_handles[-1])
             topic_url = WebDataA().get_topic_url()
 
             # focus to frame
             if func.__name__ != 'iframe':
-                AuxFunc().switch_to_frame(xpath=XpathResolver().iframe())
+                af.AuxFunc().switch_to_frame(xpath=XpathResolver().iframe())
 
             # find xpath in db
             xpathdb_data = db.XpathController().read()
@@ -129,7 +129,7 @@ class XpathResolver:
             '"ПРОДОЛЖИТЬ")]',
 
             '//button[@class="quiz-control-panel__button quiz-control-panel__button_right-arrow '
-            'quiz-control-panel__button_show-arrow"]'
+            'quiz-control-panel__button_show-arrow" and not(@style="display: none;")]'
             '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
             '"ПРОДОЛЖИТЬ")]',
 
@@ -200,7 +200,9 @@ class XpathResolver:
 
             '//*[@class="quiz-control-panel__quiz-score-info"]',
 
-            '//*[@class="quiz-top-panel__quiz-score-info"]'
+            '//*[@class="quiz-top-panel__quiz-score-info"]',
+
+            '//*[@class="quiz-top-panel__quiz-score-info quiz-top-panel__quiz-score-info_only-quiz-score"]'
         ]
 
     @staticmethod
@@ -272,38 +274,34 @@ class XpathResolver:
 
 class WebDataA:
 
-    def __init__(self):
-        self.driver = driver_init.BrowserDriver().browser
-        self.aux_func = AuxFunc()
-
     def get_topic_name(self) -> str:
         """Return current topic name"""
-        self.aux_func.switch_to_frame()
+        af.AuxFunc().switch_to_frame()
         mask = XpathResolver.topic_name()
-        return self.__clean_text(self.aux_func.try_get_text(xpath=mask, amount=1))
+        return self.__clean_text(af.AuxFunc().try_get_text(xpath=mask, amount=1))
 
-    def get_topic_url(self) -> str:
+    @staticmethod
+    def get_topic_url() -> str:
         """Return topic URL"""
-        self.aux_func.switch_to_frame()
+        af.AuxFunc().switch_to_frame()
         mask = XpathResolver.topic_name()
-        return self.aux_func.try_get_attribute(xpath=mask, attribute='baseURI')
+        return af.AuxFunc().try_get_attribute(xpath=mask, attribute='baseURI')
 
     def get_question(self) -> str:
         """Returns question text"""
-        self.aux_func.switch_to_frame(xpath=XpathResolver.iframe())
+        af.AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
         mask = XpathResolver.question_text()
-        return self.__clean_text(self.aux_func.try_get_text(xpath=mask, amount=1))
+        return self.__clean_text(af.AuxFunc().try_get_text(xpath=mask, amount=1))
 
     def get_answers(self) -> List[str]:
         """Returns answers list"""
-        self.aux_func.switch_to_frame(xpath=XpathResolver.iframe())
+        af.AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
         mask = XpathResolver.answer_text()
-        return [self.__clean_text(each) for each in self.aux_func.try_get_text(xpath=mask)]
+        return [self.__clean_text(each) for each in af.AuxFunc().try_get_text(xpath=mask)]
 
     def get_link(self, answer_text: str) -> WebElement | None:
         """Returns webelement of answer (to click on it)"""
-        self.aux_func.switch_to_frame(xpath=XpathResolver.iframe())
-        driver = driver_init.BrowserDriver().browser
+        af.AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
         mask = XpathResolver.answer_text()
         try:
             for element in driver.find_elements(By.XPATH, mask):
@@ -312,19 +310,19 @@ class WebDataA:
         except NoSuchElementException:
             raise NoFoundedElement(mask)
 
-    def get_selectors_type(self) -> str:
+    @staticmethod
+    def get_selectors_type() -> str:
         """Returns type of selectors via checking firs founded element (radiobutton or checkbox)"""
-        self.aux_func.switch_to_frame(xpath=XpathResolver.iframe())
+        af.AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
         mask = XpathResolver.answer_choice_type()
         try:
-            return self.driver.find_element(By.XPATH, mask).get_attribute('type')
+            return driver.find_element(By.XPATH, mask).get_attribute('type')
         except NoSuchElementException:
             raise NoFoundedElement(mask)
 
     def get_clicked_answers(self) -> List[str]:
         answers = self.get_answers()
         data = []
-        driver = driver_init.BrowserDriver().browser
         answer_text_mask = XpathResolver.answer_text()
         answer_choice_mask = XpathResolver.answer_choice_type()
         answers_data = zip(answers,

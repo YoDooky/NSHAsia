@@ -71,20 +71,20 @@ class AnswerChoice:
 
 
 class QuestionSolve:
-    def __init__(self, strategy: Union[Type[strat.QuestionStrategy], None], questions_left: int = 0):
+    def __init__(self, strategy: Union[Type[strat.QuestionStrategy], None]):
         self.strategy = strategy
-        self.questions_left = questions_left
 
     def solve_question(self) -> Type[strat.QuestionStrategy]:
         if self.strategy is None:
             self.define_strategy()
-        strat.QuestionSolveStrategy(self.strategy).do_work(self.questions_left)
+        strat.QuestionSolveStrategy(self.strategy).do_work()
         return self.strategy
 
     def define_strategy(self):
         """Find demand question solve strategy for current topic depending on founded xpath (current_score)"""
         try:
-            strat.QuestionStrategyB(self.questions_left).get_result_data()
+            if strat.QuestionStrategyB().get_result_data() is None:
+                self.strategy = strat.QuestionStrategyA
             self.strategy = strat.QuestionStrategyB
         except IndexError:
             self.strategy = strat.QuestionStrategyA

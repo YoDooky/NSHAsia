@@ -1,11 +1,7 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import WebDriverException
 import logging
 from selenium.webdriver.remote.remote_connection import LOGGER
-
-from config.init_folders import CHROMEDRIVER_PATH
 
 LOGGER.setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -14,17 +10,20 @@ logging.getLogger("selenium").setLevel(logging.WARNING)
 
 class BrowserDriver:
     __instance = None
+    browser = None
 
     def __new__(cls, *args, **kwargs):
         if cls.__instance is None:
             cls.__instance = super().__new__(cls)
-            cls._set_options(cls.__instance)
+            cls.browser = webdriver.Chrome(options=cls._set_options())
+            cls.browser.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         return cls.__instance
 
     def __del__(self):
         BrowserDriver.__instance = None
 
-    def _set_options(self):
+    @staticmethod
+    def _set_options() -> Options:
         options = Options()
         options.add_argument('--log-level=3')
         options.add_argument("start-maximized")
@@ -40,5 +39,7 @@ class BrowserDriver:
         options.add_experimental_option("prefs", {
             "profile.default_content_setting_values.notifications": 1
         })
-        self.browser = webdriver.Chrome(options=options)
-        self.browser.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        return options
+
+
+driver = BrowserDriver().browser

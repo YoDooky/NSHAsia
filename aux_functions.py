@@ -12,20 +12,19 @@ from selenium.common.exceptions import TimeoutException
 from threading import Thread, Lock
 import zipfile
 
-import driver_init
+from driver_init import driver
 from config.init_folders import MUSIC_FILE_PATH, ALARM_FILE_PATH
 from log import print_log
 import web
 
+
 class AuxFunc:
 
-    def __init__(self):
-        self.driver = driver_init.BrowserDriver().browser
-
-    def wait_element_load(self, xpath, timeout=10) -> bool:
+    @staticmethod
+    def wait_element_load(xpath, timeout=10) -> bool:
         """задержка для того чтобы загрузились скрипты, ajax и прочее гавно"""
         try:
-            WebDriverWait(self.driver, timeout).until(ec.presence_of_element_located((By.XPATH, xpath)))
+            WebDriverWait(driver, timeout).until(ec.presence_of_element_located((By.XPATH, xpath)))
             return True
         except TimeoutException:
             print_log(f'[ERR] Не смог дождаться загрузки элемента {xpath} в течении '
@@ -37,42 +36,40 @@ class AuxFunc:
         for i in range(try_numb):
             try:
                 if window_numb is not None:
-                    # self.driver.switch_to.window(self.driver.window_handles[window_numb])
-                    # self.driver.switch_to.window(self.driver.window_handles[-1])
                     self.switch_to_frame(web.XpathResolver().iframe())
                     # perform click
-                    driver = driver_init.BrowserDriver().browser
                     actions = ActionChains(driver)
                     actions.move_by_offset(0, 0).click().perform()
                 if scroll_to:
-                    run_button_element = self.driver.find_element(By.XPATH, xpath)
-                    self.driver.execute_script("arguments[0].scrollIntoView(true);", run_button_element)
+                    run_button_element = driver.find_element(By.XPATH, xpath)
+                    driver.execute_script("arguments[0].scrollIntoView(true);", run_button_element)
                     if i % 2:
-                        self.driver.execute_script("window.scrollBy(0 , 60);")
+                        driver.execute_script("window.scrollBy(0 , 60);")
                     else:
-                        self.driver.execute_script("window.scrollBy(0 , -60);")
+                        driver.execute_script("window.scrollBy(0 , -60);")
                 if element:
-                    self.driver.find_elements(By.XPATH, xpath)[element].click()
+                    driver.find_elements(By.XPATH, xpath)[element].click()
                 else:
-                    self.driver.find_element(By.XPATH, xpath).click()
+                    driver.find_element(By.XPATH, xpath).click()
                 return True
             except Exception as ex:
                 if i >= try_numb - 1:
-                    logging.exception("An error occurred during trying to click")
+                    logging.exception(f"{ex}\nAn error occurred during trying to click")
                     break
                 time.sleep(1)
                 continue
         return False
 
-    def try_get_text(self, xpath, amount=0, try_numb=10) -> Union[str, List]:
+    @staticmethod
+    def try_get_text(xpath, amount=0, try_numb=10) -> Union[str, List]:
         """пытаемся извлечь текст из элемента"""
         for i in range(try_numb):
             if not amount:  # если нужно искать несколько элементов
                 try:
-                    element = self.driver.find_elements(By.XPATH, xpath)
+                    element = driver.find_elements(By.XPATH, xpath)
                 except Exception as ex:
                     if i >= try_numb - 1:
-                        logging.exception("An error occurred during trying to get a bunch of text")
+                        logging.exception(f"{ex}\nAn error occurred during trying to get a bunch of text")
                     time.sleep(1)
                     continue
                 text_list = []
@@ -89,7 +86,7 @@ class AuxFunc:
                                 break
                         except Exception as ex:
                             if i >= try_numb - 1:
-                                logging.exception("An error occurred during trying to get a bunch of text")
+                                logging.exception(f"{ex}\nAn error occurred during trying to get a bunch of text")
                             time.sleep(1)
                             break
                 else:  # если element пуст тогда ждем
@@ -97,10 +94,10 @@ class AuxFunc:
                     continue
             else:  # если нужно искать один элемент
                 try:
-                    element = self.driver.find_element(By.XPATH, xpath)
+                    element = driver.find_element(By.XPATH, xpath)
                 except Exception as ex:
                     if i >= try_numb - 1:
-                        logging.exception("An error occurred during trying to get a text")
+                        logging.exception(f"{ex}\nAn error occurred during trying to get a text")
                     time.sleep(1)
                     continue
                 if element:  # если element НЕ пуст. Иногда не успевает считаться значение, поэтому иначе будем ждать
@@ -109,39 +106,41 @@ class AuxFunc:
                             return element.get_attribute('innerText')
                     except Exception as ex:
                         if i >= try_numb - 1:
-                            logging.exception("An error occurred during trying to get a text")
+                            logging.exception(f"{ex}\nAn error occurred during trying to get a text")
                         time.sleep(1)
                         continue
                 else:  # если element пуст тогда ждем
                     time.sleep(1)
                     continue
 
-    def try_get_attribute(self, xpath: str, attribute: str, try_numb: int = 5) -> str:
+    @staticmethod
+    def try_get_attribute(xpath: str, attribute: str, try_numb: int = 5) -> str:
         """Return target attribute of web element"""
         for i in range(try_numb):
             try:
-                element = self.driver.find_element(By.XPATH, xpath).get_attribute(attribute)
+                element = driver.find_element(By.XPATH, xpath).get_attribute(attribute)
                 return element
             except Exception:
                 time.sleep(1)
                 continue
         logging.exception("An error occurred during trying to get an attribute of text")
 
-    def switch_to_frame(self, xpath=None, try_numb: int = 10) -> bool:
+    @staticmethod
+    def switch_to_frame(xpath=None, try_numb: int = 10) -> bool:
         """функция для переключения на фрейм"""
         for i in range(try_numb):  # пробуем переключиться на тест
             try:
-                self.driver.implicitly_wait(1)
+                driver.implicitly_wait(1)
                 # WebDriverWait(self.driver, 1).until(ec.number_of_windows_to_be(windows_numb))
-                # self.driver.switch_to.window(self.driver.window_handles[windows_numb - 1])
-                self.driver.switch_to.window(self.driver.window_handles[-1])
-                self.driver.implicitly_wait(1)
+                # driver.switch_to.window(driver.window_handles[windows_numb - 1])
+                driver.switch_to.window(driver.window_handles[-1])
+                driver.implicitly_wait(1)
                 if xpath:
-                    self.driver.switch_to.frame(self.driver.find_element(By.XPATH, xpath))
+                    driver.switch_to.frame(driver.find_element(By.XPATH, xpath))
                 return True
             except Exception as ex:
                 if i >= try_numb - 1:
-                    logging.exception("An error occurred during trying to switch to iframe")
+                    logging.exception(f"{ex}\nAn error occurred during trying to switch to iframe")
                 time.sleep(1)
                 continue
         return False

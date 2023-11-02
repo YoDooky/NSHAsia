@@ -51,3 +51,11 @@ class TheoryNotChanges(Exception):
     def __init__(self):
         super().__init__(
             '\nОкно с теорией не изменяется. Скорее всего из-за конца темы')
+
+
+class QuizEnded(Exception):
+    """Exception to check if quiz has been ended"""
+
+    def __init__(self):
+        super().__init__(
+            '\nОкно с теорией не изменяется. Скорее всего из-за конца темы')
