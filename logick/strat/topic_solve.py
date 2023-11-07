@@ -24,6 +24,7 @@ class TopicStrategy:
         try:
             strat.TheorySolveStrategy(strat.TheoryA()).do_work()
         except Exception as ex:
+            AuxFunc().play_sound()
             res = input(f"{ex}\n"
                         f"Перейди на экран с другим тестом и нажми <Enter>")
             if not res:
@@ -53,7 +54,10 @@ class TopicStrategy:
                     xpath=XpathResolver().question_text(),
                     amount=1,
                     try_numb=2
-            ):
+            ) and len(AuxFunc().try_get_text(
+                xpath=XpathResolver().question_text(),
+                try_numb=2
+            )) == 1:
                 try:
                     self.solve_question(question_num)
                 except QuizEnded:
@@ -86,10 +90,13 @@ class TopicStrategy:
                     raise QuizEnded
 
         q_solve = question_solve.QuestionSolve(strategy=self.question_strategy)
-        self.question_strategy = q_solve.solve_question()  # remember question solving strategy for current topic
 
         self.last_question_text = AuxFunc().try_get_text(
             XpathResolver().question_text())  # remember last question page
+        # if self.question_strategy is None:
+        self.question_strategy = q_solve.solve_question()  # remember question solving strategy for current topic
+
+
 
     @staticmethod
     def click_next_button(mask: str):
