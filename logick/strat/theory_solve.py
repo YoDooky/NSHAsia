@@ -49,11 +49,10 @@ class TheoryStrategy:
 
 
 class TheoryA(TheoryStrategy):
-    """Solving theory in tests where theory progress is exist"""
+    """Solving theory where is standatr window"""
     pass
 
-#
+
 # class TheoryB(TheoryStrategy):
-#     """Solving theory in tests where theory progress doesn't exist
-#     Solves theory while button next_theory is existed"""
-#     pass
+#     """Solving theory where is one page with navigation panel"""
+#

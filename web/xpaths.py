@@ -39,7 +39,10 @@ def xpath_decorator(has_exception: bool = True):
 
             # perform click
             actions = ActionChains(driver)
-            actions.move_by_offset(0, 0).click().perform()
+            try:
+                actions.move_by_offset(0, driver.execute_script("return window.innerHeight;")).click().perform()
+            except:
+                actions.move_by_offset(0, 0).click().perform()
 
             # find xpath in method and write it if it corrects to db
             masks = func(*args)
@@ -101,7 +104,9 @@ class XpathResolver:
             '//button[@class="quiz-control-panel__button quiz-control-panel__button_right-arrow quiz-control-panel'
             '__button_show-arrow"]'
             '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
-            '"НАЧАТЬ ТЕСТ")]'
+            '"НАЧАТЬ ТЕСТ")]',
+
+            '//*[@class="complete-section-content-container"]/button'  # button <Завершить> similar to <НАЧАТЬ ТЕСТ>
         ]
 
     @staticmethod
@@ -165,7 +170,9 @@ class XpathResolver:
             'universal-control-panel__button_right-arrow"]',
 
             '//*[@class="uikit-primary-button uikit-primary-button_size_medium navigation-controls__button '
-            'uikit-primary-button_next navigation-controls__button_next"]'
+            'uikit-primary-button_next navigation-controls__button_next"]',
+
+            '//*[@class="next-section-content-container"]/button'
         ]
 
     @staticmethod

@@ -3,7 +3,8 @@ import time
 from selenium.webdriver import ActionChains
 import logging
 
-from exceptions import QuizEnded
+import log
+from exceptions import QuizEnded, NoFoundedElement
 from log import print_log
 from aux_functions import AuxFunc
 from driver_init import driver
@@ -22,23 +23,29 @@ class TopicStrategy:
         self.question_strategy = None
 
         try:
-            strat.TheorySolveStrategy(strat.TheoryA()).do_work()
+            theory_strategy = strat.TheoryA()
+            strat.TheorySolveStrategy(theory_strategy).do_work()
         except Exception as ex:
             AuxFunc().play_sound()
-            res = input(f"{ex}\n"
-                        f"Перейди на экран с другим тестом и нажми <Enter>")
+            print_log(message=f'{ex}', silent=True)
+            res = input("\nПерейди на экран с другим тестом и нажми <Enter>")
             if not res:
                 self.main()
 
-        if not self.solve_topic():
+        if self.is_quiz():
+            quiz_passed = self.solve_topic()
+            if not quiz_passed:
+                res = input('Перейди на экран с другим тестом и нажми <Enter>\n')
+                if not res:
+                    self.main()
+            else:  # if current test is passed then check if there is next topic and run solving again
+                if AuxFunc().try_click(xpath=XpathResolver().next_test_part(), try_numb=5, window_numb=1):
+                    print_log('В текущем топике найден еще тест, продолжаю решать')
+                    self.main()
+        else:
             AuxFunc().play_sound()
-            res = input('Возникла ошибка при решении теста. Перейди на экран с тестом и нажми <Enter>.\n'
-                        'Нажми <q> и после <Enter> для выхода')
+            res = input('\nВ теме нет теста. Перейди на экран с другим тестом и нажми <Enter>\n')
             if not res:
-                self.main()
-        else:  # if current test is passed then check if there is next topic and run solving again
-            if AuxFunc().try_click(xpath=XpathResolver().next_test_part(), try_numb=5, window_numb=1):
-                print_log('В текущем топике найден еще тест, продолжаю решать')
                 self.main()
 
     def solve_topic(self) -> bool:
@@ -75,7 +82,7 @@ class TopicStrategy:
             return self.solve_topic()
         except Exception as ex:
             self.question_strategy = None
-            print_log(f'Ошибка: {ex}. Возникла проблема при решении курса. Пробую еще раз')
+            print_log(f'Ошибка: {ex}. Возникла проблема при решении темы.')
             logging.exception("An error occurred during topic solving")
 
     def solve_question(self, num: int):
@@ -95,8 +102,6 @@ class TopicStrategy:
             XpathResolver().question_text())  # remember last question page
         # if self.question_strategy is None:
         self.question_strategy = q_solve.solve_question()  # remember question solving strategy for current topic
-
-
 
     @staticmethod
     def click_next_button(mask: str):
@@ -140,6 +145,16 @@ class TopicStrategy:
             if x % 5 == 0:  # every 5 try reload page
                 self.reboot_question_page()
         return False
+
+    @staticmethod
+    def is_quiz() -> bool:
+        """Check if there is quiz question"""
+        try:
+            question_text = XpathResolver().question_text()
+            if question_text:
+                return True
+        except NoFoundedElement:
+            return False
 
 
 class TopicStrategyA(TopicStrategy):

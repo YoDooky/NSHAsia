@@ -5,9 +5,6 @@ class Folders:
     # main path
     FILES_PATH = "C:/NSHAsia"
 
-    # chromedriver path
-    DRIVER_PATH = f'{FILES_PATH}/driver'
-
     # DB folder
     DB_PATH = f'{FILES_PATH}/database'
 
@@ -36,6 +33,6 @@ Folders.init_folders()
 
 MUSIC_FILE_PATH = f'{Folders.AUDIO_PATH}/heyuser.mp3'  # путь до звукового файла
 ALARM_FILE_PATH = f'{Folders.AUDIO_PATH}/alarm.mp3'  # путь до звукового файла с пиздец каким алармом
-CHROMEDRIVER_PATH = f'{Folders.DRIVER_PATH}/chromedriver-win64/chromedriver.exe'
 CONFIG_FILE_PATH = f'{Folders.CONFIG_PATH}/config.txt'
 LOG_FILE_PATH = f'{Folders.LOG_PATH}/log.txt'
+EXCEL_DB_FILE_PATH = f'{Folders.DB_PATH}/excel.xlsx'

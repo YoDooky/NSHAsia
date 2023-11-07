@@ -16,6 +16,7 @@ class WebData(Base):
                            cascade='all, delete-orphan')  # last option to delete related table
 
     def __init__(self, user: str, topic: str, question: str, is_radiobutton: int = 0):
+        super().__init__()
         self.user = user
         self.topic = topic
         self.question = question
@@ -33,6 +34,7 @@ class WebAnswer(Base):
     webdata = relationship(WebData.__name__, back_populates='answers')
 
     def __init__(self, text: str, webdata: WebData, is_selected: int = 0):
+        super().__init__()
         self.text = text
         self.webdata = webdata
         self.is_selected = is_selected
@@ -49,6 +51,7 @@ class DbData(Base):
                            cascade='all, delete-orphan')  # last option to delete related table
 
     def __init__(self, question: str, topic: str):
+        super().__init__()
         self.topic = topic
         self.question = question
 
@@ -64,6 +67,7 @@ class DbAnswer(Base):
     dbdata = relationship(DbData.__name__, back_populates='answers')
 
     def __init__(self, text: str, dbdata: DbData, is_correct: int):
+        super().__init__()
         self.text = text
         self.dbdata = dbdata
         self.is_correct = is_correct
@@ -83,6 +87,7 @@ class TempDbData(Base):
 
     def __init__(self, question: str, topic: str, last_answer_combination: int | None = None,
                  current_answer_combination: int | None = None):
+        super().__init__()
         self.topic = topic
         self.question = question
         self.last_answer_combination = last_answer_combination
@@ -99,6 +104,7 @@ class TempDbAnswer(Base):
     tempdbdata = relationship(TempDbData.__name__, back_populates='answers')
 
     def __init__(self, text: str, tempdbdata: TempDbData):
+        super().__init__()
         self.text = text
         self.tempdbdata = tempdbdata
 
@@ -111,6 +117,7 @@ class Xpath(Base):
     element = Column('element', String)
 
     def __init__(self, url: str, xpath: str, element: str):
+        super().__init__()
         self.url = url
         self.xpath = xpath
         self.element = element

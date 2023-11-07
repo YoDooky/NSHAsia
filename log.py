@@ -16,7 +16,7 @@ def init_logging_config():
                         level=logging.DEBUG)
 
 
-def print_log(message, silent=None):
+def print_log(message: str, silent: bool = False):
     if not silent:
         print(message)
     logging.debug(message)
