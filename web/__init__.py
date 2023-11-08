@@ -1,1 +1,1 @@
-from .xpaths import WebDataA, XpathResolver
+from .xpaths import TopicWebData, XpathResolver

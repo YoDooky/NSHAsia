@@ -3,7 +3,6 @@ import time
 from selenium.webdriver import ActionChains
 import logging
 
-import log
 from exceptions import QuizEnded, NoFoundedElement
 from log import print_log
 from aux_functions import AuxFunc
@@ -21,7 +20,11 @@ class TopicStrategy:
 
     def main(self):
         self.question_strategy = None
+        self.do_theory()
+        self.do_quiz()
 
+    def do_theory(self):
+        """Theory"""
         try:
             theory_strategy = strat.TheoryA()
             strat.TheorySolveStrategy(theory_strategy).do_work()
@@ -32,15 +35,20 @@ class TopicStrategy:
             if not res:
                 self.main()
 
+    def do_quiz(self):
+        """Quiz"""
         if self.is_quiz():
-            quiz_passed = self.solve_topic()
+            quiz_passed = self.solve_quiz()
+            # if quiz not passed then call user to open new test
             if not quiz_passed:
+                AuxFunc().play_sound()
                 res = input('Перейди на экран с другим тестом и нажми <Enter>\n')
                 if not res:
                     self.main()
-            else:  # if current test is passed then check if there is next topic and run solving again
+            # if current test is passed then check if there is next topic and run solving again
+            else:
                 if AuxFunc().try_click(xpath=XpathResolver().next_test_part(), try_numb=5, window_numb=1):
-                    print_log('В текущем топике найден еще тест, продолжаю решать')
+                    print_log('В текущей теме найдена кнопка далее, продолжаю решать')
                     self.main()
         else:
             AuxFunc().play_sound()
@@ -48,14 +56,14 @@ class TopicStrategy:
             if not res:
                 self.main()
 
-    def solve_topic(self) -> bool:
+    def solve_quiz(self) -> bool:
         """Solve current topic"""
         print_log("\n\n\n--> РЕШАЮ ТЕСТ")
+
         try:
             question_num = 0
             self.has_next_button = True
             AuxFunc().switch_to_frame(xpath=XpathResolver().iframe())
-
             # while there is question on page, continue solving
             while AuxFunc().try_get_text(
                     xpath=XpathResolver().question_text(),
@@ -73,13 +81,13 @@ class TopicStrategy:
 
             self.click_next_button(XpathResolver().results_button())
 
-            if self.is_topic_passed():
+            if self.is_quiz_passed():
                 print_log('Решение темы завершено')
                 self.question_strategy = None
                 return True
 
             self.click_next_button(XpathResolver().repeat_button())
-            return self.solve_topic()
+            return self.solve_quiz()
         except Exception as ex:
             self.question_strategy = None
             print_log(f'Ошибка: {ex}. Возникла проблема при решении темы.')
@@ -118,19 +126,20 @@ class TopicStrategy:
         return False
 
     @staticmethod
-    def is_topic_passed():
-        text = AuxFunc().try_get_text(xpath=XpathResolver().topic_score(), amount=1)
-        if ' не ' not in text:
-            return True
-        return False
-
-    @staticmethod
     def reboot_question_page() -> None:
         """Reboot question page"""
         driver.refresh()
         driver.switch_to.alert.accept()
         AuxFunc().switch_to_frame(xpath=XpathResolver().iframe())
         AuxFunc().try_click(xpath=XpathResolver().popup_approve())
+
+    @staticmethod
+    def is_quiz_passed():
+        """Check if quiz solved"""
+        text = AuxFunc().try_get_text(xpath=XpathResolver().topic_score(), amount=1)
+        if ' не ' not in text:
+            return True
+        return False
 
     def is_next_question(self, last_questions_text: str) -> bool:
         """Wait next question load"""

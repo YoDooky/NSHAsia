@@ -22,7 +22,7 @@ def xpath_decorator(has_exception: bool = True):
     def upper_wrapper(func):
         def wrapper(*args):
             driver.switch_to.window(driver.window_handles[-1])
-            topic_url = WebDataA().get_topic_url()
+            topic_url = TopicWebData().get_topic_url()
 
             # focus to frame
             if func.__name__ != 'iframe':
@@ -244,7 +244,13 @@ class XpathResolver:
 
     # WebData
     @staticmethod
-    # @select_xpath_decorator(has_exception=True)
+    def course_name():
+        """Course name"""
+        return [
+            '//*[@class[contains(.,"title_dir_ltr")]]'
+        ]
+
+    @staticmethod
     def topic_name():
         """Name of current topic"""
         return '//*[@id="contentItemTitle"]'
@@ -279,7 +285,7 @@ class XpathResolver:
         ]
 
 
-class WebDataA:
+class TopicWebData:
 
     def get_topic_name(self) -> str:
         """Return current topic name"""
@@ -352,3 +358,17 @@ class WebDataA:
         for symbol in spec_symbols_accord:
             text = text.replace(symbol, spec_symbols_accord.get(symbol))
         return ' '.join(text.split())
+
+
+class CourseWebData:
+    # def get_courses_name(self) -> List[str]:
+    #     return [course.get_attribute('innerText') for course in self._get_courses()]
+
+    @staticmethod
+    def get_course_name(course: WebElement) -> str:
+        return course.get_attribute('innerText')
+
+    @staticmethod
+    def get_courses() -> List[WebElement]:
+        mask = XpathResolver.course_name()
+        return driver.find_elements(By.XPATH, mask)

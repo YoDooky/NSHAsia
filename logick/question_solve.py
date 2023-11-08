@@ -7,7 +7,7 @@ from db import DbDataController, WebDataController, TempDbDataController, \
     WebData, DbData, TempDbData
 from logick import GenerateVariant, CalculateVariants, strat
 
-from web.xpaths import WebDataA
+from web.xpaths import TopicWebData
 from log import print_log
 
 
@@ -41,11 +41,11 @@ class AnswerChoice:
                                                                  prev_variant_num=temp.last_answer_combination)
             print_log(f'--> Вопрос найден во временной базе: \n {temp.question}'
                       f'\n-> Выбираю ответы на вопрос из временной базы: \n {next_answers}')
-            return [WebDataA().get_link(answer) for answer in next_answers]
+            return [TopicWebData().get_link(answer) for answer in next_answers]
         first_answer = GenerateVariant().generate(web_data[0])
         print_log(f'--> Вопроса нет в базах: \n {web_data[0].question}'
                   f'\n-> Выбираю от пизды (нет) ответ: \n {first_answer}')
-        return [WebDataA().get_link(first_answer)]
+        return [TopicWebData().get_link(first_answer)]
 
     @staticmethod
     def get_db_right_answers(db_data: List[DbData]) -> List[str]:
@@ -66,7 +66,7 @@ class AnswerChoice:
             print_log(f'--> Вопрос найден в базе: \n {db.question}'
                       f'\n-> Выбираю ответы на вопрос из базы: \n '
                       f'{[answer.text for answer in db.answers if answer.is_correct]}')
-            return [WebDataA().get_link(answer) for answer in right_answers]
+            return [TopicWebData().get_link(answer) for answer in right_answers]
         return self.get_answers_from_temp_db()
 
 
