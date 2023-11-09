@@ -1,12 +1,14 @@
 import re
-from typing import Union
+from typing import Union, Type
 
-from exceptions import NoAnswerResult
+from playsound import playsound
 
+from config import MUSIC_FILE_PATH
 from db import DbDataController, DbAnswerController, WebDataController, TempDbDataController, write_webdata_to_db, \
     DbData, DbAnswer
-from exceptions import NoSelectedAnswer
-from logick import question_solve, click_answer
+from exceptions import NoSelectedAnswer, NoAnswerResult, ImpossibleToClick
+from logick.click import click_answer
+from logick.solve import question_solve
 from web.xpaths import XpathResolver
 from aux_functions import AuxFunc
 from log import print_log
@@ -20,9 +22,11 @@ class QuestionStrategy:
         write_webdata_to_db()
         links = question_solve.AnswerChoice().get_right_answers_links()
 
-        click_answer(links)
+        if not self.choose_answer(links):
+            return
+
         write_webdata_to_db()  # update data to write selected answers
-        AuxFunc().try_click(xpath=XpathResolver().answer_button())  # click <ОТВЕТИТЬ> button
+        AuxFunc().try_click(xpath=XpathResolver.answer_button())  # click <ОТВЕТИТЬ> button
 
         if self.find_result():
             self.write_if_correct_result()
@@ -30,8 +34,17 @@ class QuestionStrategy:
             self.write_if_wrong_result()
 
     @staticmethod
+    def choose_answer(links) -> bool:
+        if not click_answer(links):
+            playsound(MUSIC_FILE_PATH)
+            print_log('[ERR]Не удалось кликнуть по ответу')
+            input('Выбери ответ, нажми <ответить> (если есть) и для продолжения нажми Enter...')
+            return False
+        return True
+
+    @staticmethod
     def get_result_data() -> str:
-        return AuxFunc().try_get_text(xpath=XpathResolver().answer_result(), amount=1, try_numb=2)
+        return AuxFunc().try_get_text(xpath=XpathResolver.answer_result(), amount=1, try_numb=2)
 
     def find_result(self) -> bool:
         answer_result = self.get_result_data().lower().replace(' ', '')
@@ -112,9 +125,11 @@ class QuestionStrategyB(QuestionStrategy):
         links = question_solve.AnswerChoice().get_right_answers_links()
         self.start_score = self.get_result_data()  # trying to get current topic result (if it exists)
 
-        click_answer(links)
+        if not self.choose_answer(links):
+            return
+
         write_webdata_to_db()  # update data to write selected answers
-        AuxFunc().try_click(xpath=XpathResolver().answer_button())  # click <ОТВЕТИТЬ> button
+        AuxFunc().try_click(xpath=XpathResolver.answer_button())  # click <ОТВЕТИТЬ> button
 
         result = self.find_result()
         if result is None:
@@ -127,7 +142,7 @@ class QuestionStrategyB(QuestionStrategy):
     @staticmethod
     def get_result_data() -> Union[int, None]:
         """Returns current topic score"""
-        mask = XpathResolver().current_score()
+        mask = XpathResolver.current_score()
         topic_score_text = AuxFunc().try_get_text(xpath=mask, amount=1, try_numb=2)  # ЗДЕСЬ ЛУЧШЕ ПОМЕНЯТЬ СТРАТЕГИЮ
         if topic_score_text is None:
             return None
@@ -143,6 +158,12 @@ class QuestionStrategyB(QuestionStrategy):
             return True
         return False
 
-# class QuestionStrategyC(QuestionStrategyB):
-#     """Question strategy for topics where the result (правильно/неправильно) of question solve doesn't exist
-#     and topic score (набрано балов X из X) is existed and last question result is not existed"""
+
+class QuestionSolveStrategy:
+    """Strategy for solving questions"""
+
+    def __init__(self, strategy: Type[QuestionStrategy]):
+        self.strategy = strategy
+
+    def do_work(self):
+        return self.strategy().solve_question()

@@ -26,7 +26,7 @@ def xpath_decorator(has_exception: bool = True):
 
             # focus to frame
             if func.__name__ != 'iframe':
-                af.AuxFunc().switch_to_frame(xpath=XpathResolver().iframe())
+                af.AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
 
             # find xpath in db
             xpathdb_data = db.XpathController().read()
@@ -41,7 +41,7 @@ def xpath_decorator(has_exception: bool = True):
             actions = ActionChains(driver)
             try:
                 actions.move_by_offset(0, driver.execute_script("return window.innerHeight;")).click().perform()
-            except:
+            except Exception:
                 actions.move_by_offset(0, 0).click().perform()
 
             # find xpath in method and write it if it corrects to db
@@ -98,7 +98,7 @@ class XpathResolver:
         """Button <НАЧАТЬ ТЕСТ>"""
         return [
             '//button[@class="quiz-uikit-primary-button quiz-uikit-primary-button_size_medium"]'
-            '//*[   абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
             '"НАЧАТЬ ТЕСТ")]',
 
             '//button[@class="quiz-control-panel__button quiz-control-panel__button_right-arrow quiz-control-panel'
@@ -154,12 +154,24 @@ class XpathResolver:
         ]
 
     @staticmethod
-    @xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=False)
     def popup_approve():
         """Button <Да> in pop-up window to resume quiz"""
         return [
-            '//button[@class="message-box-buttons-panel__window-button"]'
+            '//button[@class="message-box-buttons-panel__window-button" '
+            'and contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"НЕТ")]',
+
+            '//button[@class="uikit-primary-button '
+            'uikit-primary-button_size_medium message-box-buttons__window-button"]'
+            '/*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"НЕТ")]'
         ]
+
+    @staticmethod
+    def close_quiz():
+        """Close quiz button in right top corner"""
+        return '//*[@class="toolbar_button js_toolbar_button close"]'
 
     @staticmethod
     @xpath_decorator(has_exception=False)
@@ -184,7 +196,12 @@ class XpathResolver:
             '//*[contains(text(),"ДАЛЕЕ")]',
 
             '//*[@class="quiz-uikit-primary-button quiz-uikit-primary-button_size_medium"]'
-            '//*[contains(text(),"ДАЛЕЕ")]'
+            '//*[contains(text(),"ДАЛЕЕ")]',
+
+            '//*[@class="quiz-control-panel__button quiz-control-panel__button_right-arrow '
+            'quiz-control-panel__button_show-arrow" and not(@style="display: none;")]'
+            '/*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"ДАЛЕЕ")]'
         ]
 
     @staticmethod
@@ -244,14 +261,12 @@ class XpathResolver:
 
     # WebData
     @staticmethod
-    def course_name():
+    def course_name() -> str:
         """Course name"""
-        return [
-            '//*[@class[contains(.,"title_dir_ltr")]]'
-        ]
+        return '//*[@class[contains(.,"title_dir_ltr")]]'
 
     @staticmethod
-    def topic_name():
+    def topic_name() -> str:
         """Name of current topic"""
         return '//*[@id="contentItemTitle"]'
 
@@ -369,6 +384,6 @@ class CourseWebData:
         return course.get_attribute('innerText')
 
     @staticmethod
-    def get_courses() -> List[WebElement]:
+    def get_course_topics() -> List[WebElement]:
         mask = XpathResolver.course_name()
         return driver.find_elements(By.XPATH, mask)

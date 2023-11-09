@@ -121,3 +121,17 @@ class Xpath(Base):
         self.url = url
         self.xpath = xpath
         self.element = element
+
+
+class User(Base):
+    __tablename__ = 'users'
+    id = Column('id', Integer, primary_key=True)
+    topic_name = Column('topic_name', String)
+    questions_amount = Column('questions_amount', Integer)
+    theory_clicks = Column('theory_clicks', Integer)
+
+    def __init__(self, topic_name: str, questions_amount: int = 0, theory_clicks: int = 0):
+        super().__init__()
+        self.topic_name = topic_name
+        self.questions_amount = questions_amount
+        self.theory_clicks = theory_clicks

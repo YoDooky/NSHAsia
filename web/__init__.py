@@ -1,1 +1,1 @@
-from .xpaths import TopicWebData, XpathResolver
+from .xpaths import CourseWebData, TopicWebData, XpathResolver

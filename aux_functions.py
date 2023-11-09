@@ -28,7 +28,7 @@ class AuxFunc:
             return True
         except TimeoutException:
             print_log(f'[ERR] Не смог дождаться загрузки элемента {xpath} в течении '
-                      f'{timeout} секунд', None)
+                      f'{timeout} секунд', False)
             return False
 
     def try_click(self, xpath, element=0, window_numb=None, try_numb=10, scroll_to=True) -> bool:
@@ -36,7 +36,7 @@ class AuxFunc:
         for i in range(try_numb):
             try:
                 if window_numb is not None:
-                    self.switch_to_frame(web.XpathResolver().iframe())
+                    self.switch_to_frame(web.XpathResolver.iframe())
                     # perform click
                     actions = ActionChains(driver)
                     actions.move_by_offset(0, 0).click().perform()
@@ -159,7 +159,7 @@ class AuxFunc:
             lock.release()
             time.sleep(1)
         sys.stdout.write("\rТаймер кончил за {:2d} секунд!            \n".format(delay))
-        print_log('Таймер кончил за {:2d} секунд!\n'.format(delay), None)
+        print_log('Таймер кончил за {:2d} секунд!\n'.format(delay), False)
 
     @staticmethod
     def convert_time(time_in_sec):

@@ -15,7 +15,7 @@ class TheoryStrategy:
     def __init__(self):
         self.same_page_counter = 0
         self.theory_click_counter = 0
-        self.next_theory_button = XpathResolver().next_theory()
+        self.next_theory_button = XpathResolver.next_theory()
 
     def skip_theory(self):
         """Skips all theory"""
@@ -32,9 +32,10 @@ class TheoryStrategy:
             sys.stdout.write('\r' + f"Количество успешных кликов: {self.theory_click_counter}")  # print on one line
             sys.stdout.flush()
         time.sleep(5)
-        AuxFunc().try_click(xpath=XpathResolver().start_button(), try_numb=8)
+        AuxFunc().try_click(xpath=XpathResolver.start_button(), try_numb=8)
         time.sleep(5)
-        AuxFunc().try_click(xpath=XpathResolver().continue_button(), try_numb=8)
+        AuxFunc().try_click(xpath=XpathResolver.continue_button(), try_numb=8)
+
 
     def has_same_page(self, current_page_src: str, last_page_src: str):
         """Checks if page src has been changed since 10 attempts"""
@@ -48,11 +49,16 @@ class TheoryStrategy:
         return False
 
 
-class TheoryA(TheoryStrategy):
+class TheoryStrategyA(TheoryStrategy):
     """Solving theory where is standatr window"""
     pass
 
 
-# class TheoryB(TheoryStrategy):
-#     """Solving theory where is one page with navigation panel"""
-#
+class TheorySolveStrategy:
+    """Strategy for theory solving"""
+
+    def __init__(self, strategy: TheoryStrategy):
+        self.strategy = strategy
+
+    def do_work(self):
+        self.strategy.skip_theory()

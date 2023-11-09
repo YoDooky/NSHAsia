@@ -1,14 +1,14 @@
-from typing import Type, Union
-
+from typing import Type, Union, List
 from selenium.webdriver.remote.webelement import WebElement
-from typing import List
 
 from db import DbDataController, WebDataController, TempDbDataController, \
     WebData, DbData, TempDbData
-from logick import GenerateVariant, CalculateVariants, strat
 
 from web.xpaths import TopicWebData
 from log import print_log
+
+from logick.aux_funcs import GenerateVariant, CalculateVariants
+from logick.strat.question_solve import QuestionStrategy, QuestionSolveStrategy, QuestionStrategyB, QuestionStrategyA
 
 
 def validate_db_data(main_data: WebData | DbData | TempDbData, comp_data: WebData | DbData | TempDbData) -> bool:
@@ -71,20 +71,20 @@ class AnswerChoice:
 
 
 class QuestionSolve:
-    def __init__(self, strategy: Union[Type[strat.QuestionStrategy], None]):
+    def __init__(self, strategy: Union[Type[QuestionStrategy], None]):
         self.strategy = strategy
 
-    def solve_question(self) -> Type[strat.QuestionStrategy]:
+    def solve_question(self) -> Type[QuestionStrategy]:
         if self.strategy is None:
             self.define_strategy()
-        strat.QuestionSolveStrategy(self.strategy).do_work()
+        QuestionSolveStrategy(self.strategy).do_work()
         return self.strategy
 
     def define_strategy(self):
         """Find demand question solve strategy for current topic depending on founded xpath (current_score)"""
         try:
-            if strat.QuestionStrategyB().get_result_data() is None:
-                self.strategy = strat.QuestionStrategyA
-            self.strategy = strat.QuestionStrategyB
+            if QuestionStrategyB().get_result_data() is None:
+                self.strategy = QuestionStrategyA
+            self.strategy = QuestionStrategyB
         except IndexError:
-            self.strategy = strat.QuestionStrategyA
+            self.strategy = QuestionStrategyA

@@ -1,9 +1,9 @@
 import logging
 from typing import List, Dict, Union
 from sqlalchemy import update, delete
-from db.models import WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath
+from db.models import WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath, User
 from db.database import session
-import web #import WebDataA
+import web  # import WebDataA
 
 
 def write_webdata_to_db():
@@ -19,14 +19,14 @@ def write_webdata_to_db():
 
 class DataController:
     def __init__(self):
-        self.model = Union[WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath]
+        self.model = Union[WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath, User]
 
     @staticmethod
-    def write(data: Union[WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath]):
+    def write(data: Union[WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath, User]):
         session.add(data)
         session.commit()
 
-    def read(self) -> List[Union[WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath]]:
+    def read(self) -> List[Union[WebData, WebAnswer, DbData, DbAnswer, TempDbData, TempDbAnswer, Xpath, User]]:
         return session.query(self.model).all()
 
     def update(self, id_: int, data: Dict):
@@ -36,7 +36,7 @@ class DataController:
             session.commit()
         except Exception as ex:
             session.rollback()
-            logging.exception(f"Error:\n    {ex}\nAn error occurred during update data from model: {self.model}")
+            logging.exception(f"[ERR]\n    {ex}\nAn error occurred during update data from model: {self.model}")
 
     def delete(self, id_: int):
         stmt = delete(self.model).where(self.model.id == id_)
@@ -45,7 +45,14 @@ class DataController:
             session.commit()
         except Exception as ex:
             session.rollback()
-            logging.exception(f"Error:\n    {ex}\nAn error occurred during delete data from model: {self.model}")
+            logging.exception(f"[ERR]\n    {ex}\nAn error occurred during delete data from model: {self.model}")
+
+    def clear_table(self):
+        data = session.query(self.model).all()
+        ids = [each.id for each in data]
+        for id_num in ids:
+            session.delete(session.query(self.model).filter_by(id=id_num).first())
+        session.commit()
 
 
 class WebDataController(DataController):
@@ -56,17 +63,9 @@ class WebDataController(DataController):
         self.model = WebData
 
     def write(self, data: WebData):
-        self.wipe_table()
+        self.clear_table()
         session.add(data)
         WebAnswerController().write_data(data)
-        session.commit()
-
-    @staticmethod
-    def wipe_table():
-        data = session.query(WebData).all()
-        ids = [each.id for each in data]
-        for id_num in ids:
-            session.delete(session.query(WebData).filter_by(id=id_num).first())
         session.commit()
 
 
@@ -121,3 +120,9 @@ class XpathController(DataController):
     def __init__(self):
         super().__init__()
         self.model = Xpath
+
+
+class UserController(DataController):
+    def __init__(self):
+        super().__init__()
+        self.model = User

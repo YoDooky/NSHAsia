@@ -8,7 +8,7 @@ from exceptions import ImpossibleToClick
 from logick.aux_funcs import RandomDelay
 
 
-def click_answer(links: List[WebElement]):
+def click_answer(links: List[WebElement]) -> bool:
     """Click answer and check if it was clicked"""
     try_numb = 5
     for link in links:
@@ -21,4 +21,5 @@ def click_answer(links: List[WebElement]):
                 print(f'Не удалось кликнуть по ответу. Попытка {i + 1} из {try_numb}')
                 logging.exception(f"{ex}\nAn error occurred during click to answer")
             if i >= try_numb - 1:
-                raise ImpossibleToClick
+                return False
+    return True
