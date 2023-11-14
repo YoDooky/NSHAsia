@@ -1,9 +1,11 @@
 import time
 from typing import Type
 
+from playsound import playsound
 from selenium.webdriver import ActionChains
 import logging
 
+from config import MUSIC_FILE_PATH
 from exceptions import QuizEnded, NoFoundedElement
 from log import print_log
 from aux_functions import AuxFunc
@@ -13,6 +15,11 @@ from db import UserController, User
 
 from logick.solve import question_solve
 from logick.strat.theory_solve import TheoryStrategyA, TheorySolveStrategy
+
+exception_topics = {
+    'Буровые установки': ['Расставьте названия с верными номерами:'],
+    'Транспортировка': ['Расставьте объекты по своим местам:']
+}  # topics which some question cant be solved
 
 
 class TopicStrategy:
@@ -29,7 +36,7 @@ class TopicStrategy:
 
     def do_theory(self):
         """Theory"""
-        theory_strategy = TheoryStrategyA()
+        theory_strategy = TheoryStrategyA(self.topic_name)
         try:
             TheorySolveStrategy(theory_strategy).do_work()
         except Exception as ex:
@@ -45,6 +52,10 @@ class TopicStrategy:
 
     def do_quiz(self):
         """Quiz"""
+
+        # processing topics added to exception
+        self.do_exception_question()
+
         if self.is_quiz():
             quiz_passed = self.solve_quiz()
             # if quiz not passed then call user to open new test
@@ -113,6 +124,32 @@ class TopicStrategy:
             XpathResolver.question_text())  # remember last question page
         # if self.question_strategy is None:
         self.question_strategy = q_solve.solve_question()  # remember question solving strategy for current topic
+
+    def do_exception_question(self):
+        """Check if there is exceptions question and call user"""
+        if self.topic_name not in exception_topics:
+            return
+        # check if there is question text
+        try:
+            question_text = AuxFunc().try_get_text(
+                xpath=XpathResolver.question_text(),
+                try_numb=2
+            )
+        except NoFoundedElement:
+            return
+        # checks if question text not empty
+        if not question_text:
+            return
+        # checks if questions text contains exception question
+        if question_text[0] not in exception_topics[self.topic_name]:
+            return
+        # call user if there is exception question
+        playsound(MUSIC_FILE_PATH)
+        print_log(message=f'\nТема: <{self.topic_name}> добавлена в исключения'
+                          f'\nРеши вопрос сам и перейди к нормальному окну с вопросами')
+        input('\nНажми Enter для продолжения')
+        if not self.is_quiz():
+            self.main()
 
     @staticmethod
     def click_next_button(mask: str):

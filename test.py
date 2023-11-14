@@ -1,46 +1,44 @@
-# from selenium.webdriver.common.by import By
-#
-# from driver_init import driver
-# from web import XpathResolver, CourseWebData
-#
-# driver.get('https://pnsh.ispringlearn.ru/content/info/13018')
-# courses = CourseWebData().get_courses()
-#
-# for i in range(len(courses)):
-#     try:
-#         course_link = CourseWebData().get_courses()[i]
-#         driver.switch_to.window(driver.window_handles[0])
-#         course_link.click()
-#         driver.get('https://pnsh.ispringlearn.ru/content/info/13018')
-#     except:
-#         pass
-# driver.quit()
-# driver.close()
-from typing import List
+import time
+from typing import Union
+
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
+
+from driver_init import driver
 
 
-def get_courses_from_user() -> List[int]:
-    """Return user selected courses"""
-    user_input = input('\nВведи номера курсов для решения через запятую, либо'
-                       'через тире если нужно решить несколько подряд:')
-    str_mod = user_input.split(',')
-    str_comma = [int(s.strip()) for s in str_mod if '-' not in s]
+class PdfSkipper:
+    def __call__(self, *args, **kwargs):
+        while self.go_next_page():
+            if not self.go_next_page():
+                break
 
-    def get_str_dash(string_input: List[str]) -> List[int]:
-        str_dash = []
-        for num in string_input:
-            if '-' not in num:
+    @staticmethod
+    def get_next_page_button() -> Union[WebElement, None]:
+        next_page_mask = '//*[@class[contains(.,"icon next")]]/..'
+        for i in range(3):
+            driver.switch_to.window(driver.window_handles[0])
+            iframe = driver.find_element(By.XPATH, '//iframe')
+            driver.switch_to.frame(iframe)
+            try:
+                actions = ActionChains(driver)
+                actions.move_by_offset(50, 50).click().perform()
+                button = driver.find_element(By.XPATH, next_page_mask)
+                return button
+            except Exception as ex:
+                time.sleep(1)
                 continue
-            str_dash.extend(
-                [i for i in range(int(num.split('-')[0].strip()),
-                                  int(num.split('-')[1].strip()) + 1)]
-            )
-        return str_dash
 
-    str_comma.extend(get_str_dash(str_mod))
-    str_comma.sort()
-    return str_comma
+    def go_next_page(self) -> bool:
+        next_button = self.get_next_page_button()
+        if next_button is None:
+            return False
+        if next_button.get_attribute('disabled'):
+            return False
+        next_button.click()
+        time.sleep(1)
+        return True
 
 
-nums = get_courses_from_user()
-print(nums)
+skip_pdf = PdfSkipper()

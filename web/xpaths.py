@@ -181,8 +181,9 @@ class XpathResolver:
             '//*[@class="universal-control-panel__button universal-control-panel__button_next '
             'universal-control-panel__button_right-arrow"]',
 
-            '//*[@class="uikit-primary-button uikit-primary-button_size_medium navigation-controls__button '
-            'uikit-primary-button_next navigation-controls__button_next"]',
+            '//*[@class="uikit-primary-button uikit-primary-button_size_medium '
+            'navigation-controls__button uikit-primary-button_next navigation-controls__button_next" '
+            'and not(@disabled)]',
 
             '//*[@class="next-section-content-container"]/button'
         ]
