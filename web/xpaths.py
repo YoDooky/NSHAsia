@@ -95,7 +95,7 @@ class XpathResolver:
     @staticmethod
     @xpath_decorator(has_exception=False)
     def start_button():
-        """Button <НАЧАТЬ ТЕСТ>"""
+        """Button <НАЧАТЬ ТЕСТ> or <ПРИСТУПИТЬ К ТЕСТИРОВАНИЮ>"""
         return [
             '//button[@class="quiz-uikit-primary-button quiz-uikit-primary-button_size_medium"]'
             '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
@@ -106,7 +106,16 @@ class XpathResolver:
             '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
             '"НАЧАТЬ ТЕСТ")]',
 
-            '//*[@class="complete-section-content-container"]/button'  # button <Завершить> similar to <НАЧАТЬ ТЕСТ>
+            '//*[@class="complete-section-content-container"]/button',  # button <Завершить> similar to <НАЧАТЬ ТЕСТ>
+        ]
+
+    @staticmethod
+    @xpath_decorator(has_exception=False)
+    def goto_quiz_button():
+        """Button <ПЕРЕЙТИ К ТЕСТИРОВАНИЮ> or <ПРИСТУПИТЬ К ТЕСТИРОВАНИЮ>"""
+        return [
+            '//span[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"), '
+            '"ТЕСТИРОВАНИЮ")]'  # button <ПЕРЕЙТИ К ТЕСТИРОВАНИЮ> or <ПРИСТУПИТЬ К ТЕСТИРОВАНИЮ>
         ]
 
     @staticmethod
@@ -242,7 +251,7 @@ class XpathResolver:
 
     @staticmethod
     @xpath_decorator(has_exception=True)
-    def topic_score():
+    def quiz_score():
         """Question score label at the end of the topic"""
         return [
             '//*[@class="player-shape-view"]'
@@ -270,6 +279,11 @@ class XpathResolver:
     def topic_name() -> str:
         """Name of current topic"""
         return '//*[@id="contentItemTitle"]'
+
+    @staticmethod
+    def topic_status() -> str:
+        """Topic status (Завершен, Пройден на X%, В процессе, Не начат"""
+        return '//*[@class="xed2c2__text xed2c2__text_type_none"]'
 
     @staticmethod
     @xpath_decorator(has_exception=True)

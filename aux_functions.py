@@ -6,6 +6,7 @@ from typing import List, Union
 from playsound import playsound
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
@@ -59,6 +60,20 @@ class AuxFunc:
                 time.sleep(1)
                 continue
         return False
+
+    @staticmethod
+    def try_webclick(element: WebElement, try_numb: int = 5):
+        for i in range(try_numb):
+            try:
+                driver.execute_script("arguments[0].scrollIntoView(true);", element)
+                element.click()
+                return
+            except Exception as ex:
+                if i >= try_numb - 1:
+                    logging.exception(f"{ex}\nAn error occurred during trying to click")
+                    break
+                time.sleep(1)
+                continue
 
     @staticmethod
     def try_get_text(xpath, amount=0, try_numb=10) -> Union[str, List]:

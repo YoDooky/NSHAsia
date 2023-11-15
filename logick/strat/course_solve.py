@@ -29,6 +29,7 @@ class CourseStrategy:
     def __init__(self):
         self.course_url = driver.current_url
         self.topic_attemps = 0
+        self.topic_bad_status = ['не начат', 'в процессе', 'не пройден']
 
     def main(self):
         topics = CourseWebData().get_course_topics()
@@ -47,9 +48,11 @@ class CourseStrategy:
 
     def solve(self, topic_num: int):
         """Solving demand topic"""
+        if not self.is_last_topic_solved(topic_num):
+            self.solve(topic_num - 1)
         topic = self.get_next_topic_link(topic_num)
-        topic.click()
-        time.sleep(5)
+        AuxFunc().try_webclick(topic)
+        time.sleep(10)
         topic_name = CourseWebData().get_course_name(topic)
         print_log(f'\n\n---> Выбираю тему: <{topic_name}>')
         try:
@@ -60,18 +63,9 @@ class CourseStrategy:
             return
         except Exception as ex:
             self.end_solve()
-            driver.get(self.course_url)
-            time.sleep(5)
-            print_log(f'[ERR]{ex}\n Не смог решить тему.\n'
-                      f'Пробую еще раз')
-            self.topic_attemps += 1
-            # if number of attemps is too much then call user
-            if self.topic_attemps > self.MAX_TOPIC_ATTEMPS:
-                playsound(MUSIC_FILE_PATH)
-                self.topic_attemps = 0
-                input('Реши сам кожаный мешок и нажми <Enter>')
-                return
-            self.solve(topic_num)
+            print_log(f'\n[ERR]{ex}'
+                      f'\n-> Не смог решить тему. Пробую еще раз')
+            self.repeat_solve(topic_num)
         finally:
             user_data = self.get_user_data(topic_name)
             print_log(f'\n********************************************************************'
@@ -82,7 +76,7 @@ class CourseStrategy:
     @staticmethod
     def get_topics_from_user() -> List[int]:
         """Return user selected courses"""
-        user_input = input('\nВведи номера курсов для решения через запятую, либо '
+        user_input = input('\n-> Введи номера курсов для решения через запятую, и/или '
                            'через тире если нужно решить несколько подряд:')
         str_mod = user_input.split(',')
         str_comma = [int(s.strip()) for s in str_mod if '-' not in s]
@@ -110,11 +104,38 @@ class CourseStrategy:
         topic_link = CourseWebData().get_course_topics()[topic_num - 1]
         return topic_link
 
+    def is_last_topic_solved(self, topic_num: int) -> bool:
+        """Returns True if last topic has been solved"""
+        if topic_num <= 1:
+            return True
+        topics_status = AuxFunc().try_get_text(XpathResolver.topic_status())
+        try:
+            topic_status = topics_status[topic_num - 2]
+        except IndexError:
+            return False
+        if (topic_status is None or
+                not all([status not in topic_status.lower() for status in self.topic_bad_status])):
+            print_log('-> Предъидущая тема не решена. Пробую решить заново')
+            return False
+        return True
+
+    def repeat_solve(self, topic_num: int):
+        """Repeat topic solve"""
+        driver.get(self.course_url)
+        time.sleep(10)
+        self.topic_attemps += 1
+        # if number of attemps is too much then call user
+        if self.topic_attemps > self.MAX_TOPIC_ATTEMPS:
+            playsound(MUSIC_FILE_PATH)
+            self.topic_attemps = 0
+            input('\n-> Реши сам кожаный мешок и нажми <Enter>')
+            return
+        self.solve(topic_num)
+
     @staticmethod
     def continue_solve():
         """Intercepts pop-up window which asks to continue quiz"""
         try:
-            # driver.switch_to.alert.accept()
             AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
             AuxFunc().try_click(xpath=XpathResolver.popup_approve(), try_numb=3)
             time.sleep(3)
@@ -123,19 +144,20 @@ class CourseStrategy:
 
     def end_solve(self):
         """Close quiz window"""
-        # for i in range(3):
-        #     try:
-        if len(driver.window_handles) > 1:
-            driver.switch_to.window(driver.window_handles[-1])
-            driver.close()
-        driver.switch_to.window(driver.window_handles[0])
-        driver.get(self.course_url)
-        # driver.find_element(By.XPATH, XpathResolver.close_quiz()).click()
-        #     break
-        # except Exception:
-        #     time.sleep(1)
-        #     continue
-        time.sleep(3)
+        time.sleep(10)
+        try:
+            if len(driver.window_handles) > 1:
+                driver.switch_to.window(driver.window_handles[-1])
+                driver.close()
+                time.sleep(1)
+            driver.switch_to.window(driver.window_handles[0])
+            driver.get(self.course_url)
+            time.sleep(10)
+        except Exception as ex:
+            playsound(MUSIC_FILE_PATH)
+            print_log(f'\n[ERR]{ex}'
+                      f'\n-> Не могу завершить тему.')
+            input('\n-> Перейди на экран с темами и нажми Enter')
 
     @staticmethod
     def get_user_data(topic_name: str = '') -> UserData:

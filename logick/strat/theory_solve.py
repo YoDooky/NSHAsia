@@ -13,9 +13,9 @@ from log import print_log
 from web.xpaths import XpathResolver
 from logick.aux_funcs import RandomDelay
 
-exception_topics = [
-    '1. Требования к персоналу, обеспечение безопасности при работе на высоте.'
-]  # topics which theory cant be solved by standart ways
+# exception_topics = [
+#     '1. Требования к персоналу, обеспечение безопасности при работе на высоте.'
+# ]  # topics which theory cant be solved by standart ways
 
 
 class TheoryStrategy:
@@ -39,11 +39,13 @@ class TheoryStrategy:
         # skip general theory
         while AuxFunc().try_click(xpath=self.next_theory_button, try_numb=3, window_numb=1):
             self.click_theory()
-        if self.topic_name in exception_topics:
-            AuxFunc().try_click(
-                xpath='//span[@id="txt4_480cf201"]',
-                window_numb=1
-            )  # click <ПЕРЕЙТИ К ТЕСТИРОВАНИЮ> button
+        # if self.topic_name in exception_topics:
+        #     AuxFunc().try_click(
+        #         xpath='//span[@id="txt4_480cf201"]',
+        #         window_numb=1
+        #     )  # click <ПЕРЕЙТИ К ТЕСТИРОВАНИЮ> button
+        # time.sleep(5)
+        AuxFunc().try_click(xpath=XpathResolver.goto_quiz_button(), try_numb=8)
         time.sleep(5)
         AuxFunc().try_click(xpath=XpathResolver.start_button(), try_numb=8)
         time.sleep(5)

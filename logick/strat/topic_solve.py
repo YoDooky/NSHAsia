@@ -46,10 +46,6 @@ class TopicStrategy:
         finally:
             self.update_db(theory_clicks=theory_strategy.theory_click_counter)
 
-            # res = input("\nПерейди на экран с другим тестом и нажми <Enter>")
-            # if not res:
-            #     self.main()
-
     def do_quiz(self):
         """Quiz"""
 
@@ -60,10 +56,6 @@ class TopicStrategy:
             quiz_passed = self.solve_quiz()
             # if quiz not passed then call user to open new test
             if not quiz_passed:
-                # AuxFunc().play_sound()
-                # res = input('Перейди на экран с другим тестом и нажми <Enter>\n')
-                # if not res:
-                #     self.main()
                 raise QuizEnded
             # if current test is passed then check if there is next topic and run solving again
             else:
@@ -71,27 +63,22 @@ class TopicStrategy:
                     print_log('В текущей теме найдена кнопка далее, продолжаю решать')
                     self.main()
         else:
-            # AuxFunc().play_sound()
-            # res = input('\nВ теме нет теста. Перейди на экран с другим тестом и нажми <Enter>\n')
-            # if not res:
-            #     self.main()
             raise QuizEnded
 
     def solve_quiz(self) -> bool:
         """Solve current topic"""
         print_log("\n\n\n--> РЕШАЮ ТЕСТ")
-
+        self.has_next_button = True
+        AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
+        # while there is question on page, continue solving
+        question_num = 0
+        while self.is_quiz():
+            try:
+                self.solve_question(question_num)
+            except QuizEnded:
+                break
+            question_num += 1
         try:
-            question_num = 0
-            self.has_next_button = True
-            AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
-            # while there is question on page, continue solving
-            while self.is_quiz():
-                try:
-                    self.solve_question(question_num)
-                except QuizEnded:
-                    break
-                question_num += 1
             self.update_db(questions_amount=question_num)
             self.click_next_button(XpathResolver.results_button())
 
@@ -103,26 +90,27 @@ class TopicStrategy:
             self.click_next_button(XpathResolver.repeat_button())
             return self.solve_quiz()
         except Exception as ex:
+            playsound(MUSIC_FILE_PATH)
             self.question_strategy = None
-            print_log(f'Ошибка: {ex}. Возникла проблема при решении темы.')
+            print_log(f'\n[ERR]{ex}. Возникла проблема при решении темы.')
             logging.exception("An error occurred during topic solving")
+            input('-> Нажми Enter чтобы попробовать продолжить решение')
+            self.main()
 
     def solve_question(self, num: int):
         """Solve current question"""
         if num != 0:
             if self.has_next_button is True:
                 self.has_next_button = self.click_next_button(XpathResolver.continue_button())
-            if not self.is_next_question(self.last_question_text):  # if next question not loaded, reload page
+            if not self.is_next_question(self.last_question_text):
                 if AuxFunc().try_get_text(xpath=XpathResolver.continue_button(), try_numb=3):
                     raise QuizEnded
                 if AuxFunc().try_get_text(xpath=XpathResolver.results_button(), try_numb=3):
                     raise QuizEnded
 
         q_solve = question_solve.QuestionSolve(strategy=self.question_strategy)
-
         self.last_question_text = AuxFunc().try_get_text(
             XpathResolver.question_text())  # remember last question page
-        # if self.question_strategy is None:
         self.question_strategy = q_solve.solve_question()  # remember question solving strategy for current topic
 
     def do_exception_question(self):
@@ -173,17 +161,31 @@ class TopicStrategy:
         AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
         AuxFunc().try_click(xpath=XpathResolver.popup_approve())
 
-    @staticmethod
-    def is_quiz_passed():
+    def is_quiz_passed(self):
         """Check if quiz solved"""
-        text = AuxFunc().try_get_text(xpath=XpathResolver.topic_score(), amount=1)
+        # wait loading quiz_score
+        for i in range(10):
+            try:
+                XpathResolver.quiz_score()
+                break
+            except NoFoundedElement:
+                time.sleep(1)
+                continue
+
+        text = AuxFunc().try_get_text(xpath=XpathResolver.quiz_score(), amount=10)
+        if text is None:
+            playsound(MUSIC_FILE_PATH)
+            print_log('-> Не прогрузился экран с результатами.')
+            input('-> Перейди на экран с результатами и нажми Enter')
+            self.is_quiz_passed()
         if ' не ' not in text:
             return True
         return False
 
-    def is_next_question(self, last_questions_text: str) -> bool:
+    @staticmethod
+    def is_next_question(last_questions_text: str) -> bool:
         """Wait next question load"""
-        for x in range(1, 4):
+        for i in range(1, 5):
             current_question_text = AuxFunc().try_get_text(XpathResolver.question_text())
             if current_question_text is None:
                 return False
@@ -191,8 +193,8 @@ class TopicStrategy:
                 time.sleep(1)
             else:
                 return True
-            if x % 5 == 0:  # every 5 try reload page
-                self.reboot_question_page()
+            # if i % 5 == 0:  # every 5 try reload page
+            #     self.reboot_question_page()
         return False
 
     @staticmethod
