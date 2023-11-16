@@ -2,20 +2,18 @@ import sys
 import time
 from typing import Union
 
+from playsound import playsound
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
+from config import MUSIC_FILE_PATH
 from driver_init import driver
 from aux_functions import AuxFunc
 from exceptions import TheoryNotChanges
 from log import print_log
 from web.xpaths import XpathResolver
 from logick.aux_funcs import RandomDelay
-
-# exception_topics = [
-#     '1. Требования к персоналу, обеспечение безопасности при работе на высоте.'
-# ]  # topics which theory cant be solved by standart ways
 
 
 class TheoryStrategy:
@@ -28,7 +26,7 @@ class TheoryStrategy:
         self.next_theory_button = XpathResolver.next_theory()
         self.last_page_src = None
 
-    def skip_theory(self):
+    def main(self):
         """Skips all theory"""
         print_log('--> Прокликиваю теорию')
 
@@ -38,30 +36,24 @@ class TheoryStrategy:
 
         # skip general theory
         while AuxFunc().try_click(xpath=self.next_theory_button, try_numb=3, window_numb=1):
-            self.click_theory()
-        # if self.topic_name in exception_topics:
-        #     AuxFunc().try_click(
-        #         xpath='//span[@id="txt4_480cf201"]',
-        #         window_numb=1
-        #     )  # click <ПЕРЕЙТИ К ТЕСТИРОВАНИЮ> button
-        # time.sleep(5)
+            self._click_theory()
         AuxFunc().try_click(xpath=XpathResolver.goto_quiz_button(), try_numb=8)
         time.sleep(5)
         AuxFunc().try_click(xpath=XpathResolver.start_button(), try_numb=8)
         time.sleep(5)
         AuxFunc().try_click(xpath=XpathResolver.continue_button(), try_numb=8)
 
-    def click_theory(self):
+    def _click_theory(self):
         current_page_src = driver.page_source
         # check if page the same
-        if self.has_same_page(current_page_src=current_page_src, last_page_src=self.last_page_src):
+        if self._has_same_page(current_page_src=current_page_src, last_page_src=self.last_page_src):
             raise TheoryNotChanges
         self.last_page_src = current_page_src
         time.sleep(RandomDelay.get_theory_delay())
         sys.stdout.write('\r' + f"Количество успешных кликов: {self.theory_click_counter}")  # print on one line
         sys.stdout.flush()
 
-    def has_same_page(self, current_page_src: str, last_page_src: str):
+    def _has_same_page(self, current_page_src: str, last_page_src: str):
         """Checks if page src has been changed since 10 attempts"""
         if self.same_page_counter >= self.MAX_PAGE_LOAD:
             return True
@@ -74,8 +66,86 @@ class TheoryStrategy:
 
 
 class TheoryStrategyA(TheoryStrategy):
-    """Solving theory where is standatr window"""
-    pass
+    """Solving theory where is standart window"""
+
+
+class TheoryStrategyB:
+    """Solving theory where is only video"""
+
+    def main(self):
+        for i in range(10):
+            try:
+                self._focus()
+                self._set_playback_speed()
+                self._mute_sound()
+                self._play_video()
+                self._wait_video_ending()
+                return
+            except Exception as ex:
+                print_log(
+                    message=f'\n[ERR]{ex}'
+                            f'-> Не могу запустить видео, пробую еще раз',
+                    silent=True
+                )
+                continue
+        playsound(MUSIC_FILE_PATH)
+        print_log('[ERR] Не могу пропустить видео')
+        input('-> Запусти видео, подожди его окончания и нажми Enter')
+
+    def _wait_video_ending(self):
+        """Waits until video will end"""
+        print_log('-> Жду окончания видео')
+        time_left = 10
+        while time_left:
+            self._focus()
+            progress_bar_mask = '//div[@id="timeInformation"]'
+            progress_text = AuxFunc().try_get_text(xpath=progress_bar_mask, amount=1)
+            time_left = self._get_time_left(progress_text)
+            time.sleep(int(time_left / 10))
+
+    @staticmethod
+    def _focus():
+        """Focus on page"""
+        driver.switch_to.window(driver.window_handles[-1])
+        actions = ActionChains(driver)
+        actions.move_by_offset(0, 0).click().perform()
+
+    @staticmethod
+    def _set_playback_speed():
+        """Sets playback speed x2"""
+        # open playback speed menu
+        playback_speed_menu_mask = '//*[@id="playbackSpeed"]'
+        driver.find_element(By.XPATH, playback_speed_menu_mask).click()
+        # choose x2 speed
+        playback_speed_x2_mask = '//ul[@class="playback_speed_list"]/li'
+        driver.find_elements(By.XPATH, playback_speed_x2_mask)[-1].click()
+
+    @staticmethod
+    def _mute_sound():
+        """Mute sound"""
+        # turn off sound
+        sound_button_mask = '//div[@id="volumePickerVolumeIcon"]'
+        AuxFunc().try_click(sound_button_mask)
+
+    @staticmethod
+    def _play_video():
+        """Start video playback"""
+        # play video
+        play_button_mask = '//div[@class="play_pause"]'
+        AuxFunc().try_click(play_button_mask)
+
+    @staticmethod
+    def _get_time_left(progress_text: str) -> int:
+        """Returns time left"""
+
+        def time_to_second(time_str: str) -> int:
+            """Returns time in seconds"""
+            hours, minutes, seconds = map(int, time_str.split(':'))
+            return hours * 3600 + minutes * 60 + seconds
+
+        video_timer = time_to_second(progress_text.split('/')[0].strip())
+        overall_time = time_to_second(progress_text.split('/')[-1].strip())
+        return overall_time - video_timer
 
 
 class TheorySolveStrategy:
@@ -85,7 +155,7 @@ class TheorySolveStrategy:
         self.strategy = strategy
 
     def do_work(self):
-        self.strategy.skip_theory()
+        self.strategy.main()
 
 
 class PdfSkipper:

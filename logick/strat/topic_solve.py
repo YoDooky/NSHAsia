@@ -14,12 +14,19 @@ from web.xpaths import XpathResolver
 from db import UserController, User
 
 from logick.solve import question_solve
-from logick.strat.theory_solve import TheoryStrategyA, TheorySolveStrategy
+from logick.strat.theory_solve import TheoryStrategyA, TheoryStrategyB, TheorySolveStrategy
 
 exception_topics = {
     'Буровые установки': ['Расставьте названия с верными номерами:'],
     'Транспортировка': ['Расставьте объекты по своим местам:']
 }  # topics which some question cant be solved
+
+video_topics = [
+    'видеофильм',
+    'видеоурок',
+    'видеоинструкция',
+    'видеолекция'
+]  # topics with video only
 
 
 class TopicStrategy:
@@ -36,7 +43,10 @@ class TopicStrategy:
 
     def do_theory(self):
         """Theory"""
-        theory_strategy = TheoryStrategyA(self.topic_name)
+        if all([topic not in self.topic_name.lower() for topic in video_topics]):
+            theory_strategy = TheoryStrategyA(self.topic_name)
+        else:
+            theory_strategy = TheoryStrategyB()
         try:
             TheorySolveStrategy(theory_strategy).do_work()
         except Exception as ex:
@@ -44,7 +54,8 @@ class TopicStrategy:
             print_log(message=f'{ex}', silent=True)
             raise QuizEnded
         finally:
-            self.update_db(theory_clicks=theory_strategy.theory_click_counter)
+            if isinstance(theory_strategy, TheoryStrategyA):
+                self.update_db(theory_clicks=theory_strategy.theory_click_counter)
 
     def do_quiz(self):
         """Quiz"""

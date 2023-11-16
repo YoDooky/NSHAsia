@@ -67,7 +67,7 @@ class XpathResolver:
     """Base class for webelements"""
 
     @staticmethod
-    @xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=False)
     def iframe():
         """iframe"""
         return [
