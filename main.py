@@ -14,7 +14,7 @@ if __name__ == '__main__':
     init_logging_config()  # initiate logging config
     config.Folders.init_folders()
     excel_data.export_to_excel()
-    # driver.get('https://pnsh.ispringlearn.ru/courses')
+    driver.get('https://pnsh.ispringlearn.ru/courses')
 
     print('<<<<<    15.11.2023. NSHAsia rev.0.0.8  >>>>>')  # version description
 
