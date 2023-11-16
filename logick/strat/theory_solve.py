@@ -30,7 +30,7 @@ class TheoryStrategy:
         """Skips all theory"""
         print_log('--> Прокликиваю теорию')
 
-        # try to skip pdf if it exist
+        # try to skip pdf if it exists
         skip_pdf = PdfSkipper()
         skip_pdf()
 
@@ -41,7 +41,8 @@ class TheoryStrategy:
         time.sleep(5)
         AuxFunc().try_click(xpath=XpathResolver.start_button(), try_numb=8)
         time.sleep(5)
-        AuxFunc().try_click(xpath=XpathResolver.continue_button(), try_numb=8)
+        AuxFunc().try_click(xpath=XpathResolver.continue_button(), try_numb=8, window_numb=1)
+        time.sleep(5)
 
     def _click_theory(self):
         current_page_src = driver.page_source
@@ -71,6 +72,9 @@ class TheoryStrategyA(TheoryStrategy):
 
 class TheoryStrategyB:
     """Solving theory where is only video"""
+
+    def __init__(self):
+        self.theory_click_counter = 0
 
     def main(self):
         for i in range(10):

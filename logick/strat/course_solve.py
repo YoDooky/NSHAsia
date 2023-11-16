@@ -59,14 +59,13 @@ class CourseStrategy:
             self.continue_solve()
             TopicSolve().main(topic_name)
         except QuizEnded:
-            self.end_solve()
             return
         except Exception as ex:
-            self.end_solve()
             print_log(f'\n[ERR]{ex}'
                       f'\n-> Не смог решить тему. Пробую еще раз')
             self.repeat_solve(topic_num)
         finally:
+            self.end_solve()
             user_data = self.get_user_data(topic_name)
             print_log(f'\n********************************************************************'
                       f'\nТема: {user_data.topic_name}'
@@ -148,16 +147,26 @@ class CourseStrategy:
         try:
             if len(driver.window_handles) > 1:
                 driver.switch_to.window(driver.window_handles[-1])
+                self.close_alert()
                 driver.close()
                 time.sleep(1)
             driver.switch_to.window(driver.window_handles[0])
             driver.get(self.course_url)
+            self.close_alert()
             time.sleep(10)
         except Exception as ex:
             playsound(MUSIC_FILE_PATH)
             print_log(f'\n[ERR]{ex}'
                       f'\n-> Не могу завершить тему.')
             input('\n-> Перейди на экран с темами и нажми Enter')
+
+    @staticmethod
+    def close_alert():
+        time.sleep(1)
+        try:
+            driver.switch_to.alert.accept()
+        except NoAlertPresentException:
+            return
 
     @staticmethod
     def get_user_data(topic_name: str = '') -> UserData:
