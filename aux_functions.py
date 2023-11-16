@@ -55,7 +55,7 @@ class AuxFunc:
                 return True
             except Exception as ex:
                 if i >= try_numb - 1:
-                    logging.exception(f"{ex}\nAn error occurred during trying to click")
+                    # logging.exception(f"{ex}\nAn error occurred during trying to click")
                     break
                 time.sleep(1)
                 continue

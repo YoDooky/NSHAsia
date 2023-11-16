@@ -54,8 +54,7 @@ class TopicStrategy:
             print_log(message=f'{ex}', silent=True)
             raise QuizEnded
         finally:
-            if isinstance(theory_strategy, TheoryStrategyA):
-                self.update_db(theory_clicks=theory_strategy.theory_click_counter)
+            self.update_db(theory_clicks=theory_strategy.theory_click_counter)
 
     def do_quiz(self):
         """Quiz"""
@@ -216,13 +215,17 @@ class TopicStrategy:
                 xpath=XpathResolver.question_text(),
                 try_numb=2
             )
+            answer_text = AuxFunc().try_get_text(
+                xpath=XpathResolver.answer_text(),
+                try_numb=2
+            )
         except NoFoundedElement:
             return False
-        if question_text is None:
+        if question_text is None or answer_text is None:
             return False
-        if question_text[0] and len(question_text) == 1:
-            return True
-        return False
+        if len(question_text) > 1:
+            return False
+        return True
 
     def update_db(self, questions_amount: int = 0, theory_clicks: int = 0):
         """Updates user data in db for current topic"""
