@@ -79,7 +79,7 @@ class TheoryStrategyB:
     def main(self):
         for i in range(10):
             try:
-                self._focus()
+                # self._focus()
                 self._set_playback_speed()
                 self._mute_sound()
                 self._play_video()
@@ -101,22 +101,28 @@ class TheoryStrategyB:
         print_log('-> Жду окончания видео')
         time_left = 10
         while time_left:
-            self._focus()
-            progress_bar_mask = '//div[@id="timeInformation"]'
-            progress_text = AuxFunc().try_get_text(xpath=progress_bar_mask, amount=1)
+            # self._focus()
+            progress_text = self._get_progress()
             time_left = self._get_time_left(progress_text)
             time.sleep(int(time_left / 10))
 
-    @staticmethod
-    def _focus():
-        """Focus on page"""
-        driver.switch_to.window(driver.window_handles[-1])
-        actions = ActionChains(driver)
-        actions.move_by_offset(0, 0).click().perform()
+    # @staticmethod
+    # def _focus():
+    #     """Focus on page"""
+    #     driver.switch_to.window(driver.window_handles[-1])
+    #     actions = ActionChains(driver)
+    #     actions.move_by_offset(0, 0).click().perform()
 
     @staticmethod
-    def _set_playback_speed():
+    def _show_control():
+        """Show auto hiding player control panel"""
+        mp_mask = '//*[@id="mediaPlayer"]'
+        mp_element = driver.find_element(By.XPATH, mp_mask)
+        ActionChains(driver).move_to_element(mp_element).perform()
+
+    def _set_playback_speed(self):
         """Sets playback speed x2"""
+        self._show_control()
         # open playback speed menu
         playback_speed_menu_mask = '//*[@id="playbackSpeed"]'
         driver.find_element(By.XPATH, playback_speed_menu_mask).click()
@@ -124,19 +130,25 @@ class TheoryStrategyB:
         playback_speed_x2_mask = '//ul[@class="playback_speed_list"]/li'
         driver.find_elements(By.XPATH, playback_speed_x2_mask)[-1].click()
 
-    @staticmethod
-    def _mute_sound():
+    def _mute_sound(self):
         """Mute sound"""
+        self._show_control()
         # turn off sound
         sound_button_mask = '//div[@id="volumePickerVolumeIcon"]'
         AuxFunc().try_click(sound_button_mask)
 
-    @staticmethod
-    def _play_video():
+    def _play_video(self):
         """Start video playback"""
+        self._show_control()
         # play video
         play_button_mask = '//div[@class="play_pause"]'
         AuxFunc().try_click(play_button_mask)
+
+    def _get_progress(self) -> str:
+        """Returns progress bar text"""
+        self._show_control()
+        progress_bar_mask = '//div[@id="timeInformation"]'
+        return AuxFunc().try_get_text(xpath=progress_bar_mask, amount=1)
 
     @staticmethod
     def _get_time_left(progress_text: str) -> int:
