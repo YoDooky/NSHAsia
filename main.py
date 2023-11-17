@@ -8,13 +8,12 @@ from driver_init import driver
 from db.sql_to_excel import excel_data
 from logick.solve.course_solve import CourseSolve
 
-
 # noinspection GrazieInspection
 if __name__ == '__main__':
     init_logging_config()  # initiate logging config
     config.Folders.init_folders()
     excel_data.export_to_excel()
-    driver.get('https://pnsh.ispringlearn.ru/courses')
+    # driver.get('https://pnsh.ispringlearn.ru/courses')
 
     print('<<<<<    15.11.2023. NSHAsia rev.0.0.8  >>>>>')  # version description
 
@@ -27,8 +26,7 @@ if __name__ == '__main__':
             driver.switch_to.window(driver.window_handles[0])
             CourseSolve().main()
         except Exception as ex:
-            print_log(f'\n[ERR]{ex}'
-                      f'\n-> Возникла проблема при решении всего курса')
+            print_log(message='[ERR] Возникла проблема при решении всего курса', exception=ex)
         playsound(MUSIC_FILE_PATH)
 
     driver.quit()

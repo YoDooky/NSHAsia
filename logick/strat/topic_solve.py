@@ -51,7 +51,11 @@ class TopicStrategy:
             TheorySolveStrategy(theory_strategy).do_work()
         except Exception as ex:
             # AuxFunc().play_sound()
-            print_log(message=f'{ex}', silent=True)
+            print_log(
+                message='-> Выпала ошибка при решении теории. Скорее всего она закончилась',
+                exception=ex,
+                silent=True
+            )
             raise QuizEnded
         finally:
             self.update_db(theory_clicks=theory_strategy.theory_click_counter)
@@ -102,7 +106,7 @@ class TopicStrategy:
         except Exception as ex:
             playsound(MUSIC_FILE_PATH)
             self.question_strategy = None
-            print_log(f'\n[ERR]{ex}. Возникла проблема при решении темы.')
+            print_log(message='[ERR] Возникла проблема при решении темы.', exception=ex)
             logging.exception("An error occurred during topic solving")
             input('-> Нажми Enter чтобы попробовать продолжить решение')
             self.main()

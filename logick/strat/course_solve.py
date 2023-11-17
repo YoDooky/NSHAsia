@@ -61,8 +61,7 @@ class CourseStrategy:
         except QuizEnded:
             return
         except Exception as ex:
-            print_log(f'\n[ERR]{ex}'
-                      f'\n-> Не смог решить тему. Пробую еще раз')
+            print_log(message='\n-> [ERR] Не смог решить тему. Пробую еще раз', exception=ex)
             self.repeat_solve(topic_num)
         finally:
             self.end_solve()
@@ -156,8 +155,7 @@ class CourseStrategy:
             time.sleep(10)
         except Exception as ex:
             playsound(MUSIC_FILE_PATH)
-            print_log(f'\n[ERR]{ex}'
-                      f'\n-> Не могу завершить тему.')
+            print_log(message='[ERR] Не могу завершить тему.', exception=ex)
             input('\n-> Перейди на экран с темами и нажми Enter')
 
     @staticmethod

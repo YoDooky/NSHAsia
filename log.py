@@ -1,6 +1,8 @@
 import logging
 import re
 
+from selenium.common import WebDriverException
+
 from config import LOG_FILE_PATH
 
 
@@ -18,11 +20,14 @@ def init_logging_config():
                         level=logging.DEBUG)
 
 
-def print_log(message: str, silent: bool = False):
-    separator = '(Session info:'
-    pattern = re.compile(r'\(Session info.*?RtlUserThreadStart \[.*?\]\n', re.DOTALL)
-    if separator in message:
-        message = re.sub(pattern, '', message)
+def print_log(message: str = '', exception=None, silent: bool = False):
+    if isinstance(exception, WebDriverException):
+        exception.msg = exception.msg.split('(Session info:')[0]
+        exception.stacktrace = {}
+
     if not silent:
         print(message)
-    logging.debug(message)
+    if message:
+        logging.debug(message)
+    if exception:
+        logging.exception(exception)
