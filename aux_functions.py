@@ -40,7 +40,7 @@ class AuxFunc:
                     self.switch_to_frame(web.XpathResolver.iframe())
                     # perform click
                     actions = ActionChains(driver)
-                    actions.move_by_offset(0, 0).click().perform()
+                    actions.move_by_offset(0, 0).perform()
                 if scroll_to:
                     run_button_element = driver.find_element(By.XPATH, xpath)
                     driver.execute_script("arguments[0].scrollIntoView(true);", run_button_element)

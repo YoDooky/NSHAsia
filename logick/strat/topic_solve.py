@@ -14,7 +14,13 @@ from web.xpaths import XpathResolver
 from db import UserController, User
 
 from logick.solve import question_solve
-from logick.strat.theory_solve import TheoryStrategyA, TheoryStrategyB, TheorySolveStrategy
+from logick.strat.theory_solve import (
+    TheorySolveStrategy,
+    TheoryStrategy,
+    TheoryStrategyA,
+    TheoryStrategyB,
+    TheoryStrategyC, TheoryStrategyD
+)
 
 exception_topics = {
     'Буровые установки': ['Расставьте названия с верными номерами:'],
@@ -43,14 +49,14 @@ class TopicStrategy:
 
     def do_theory(self):
         """Theory"""
-        if all([topic not in self.topic_name.lower() for topic in video_topics]):
-            theory_strategy = TheoryStrategyA(self.topic_name)
-        else:
-            theory_strategy = TheoryStrategyB()
+        # try to click start button to define topic type after
+        AuxFunc().try_click(xpath=XpathResolver.start_button(), try_numb=8)
+        time.sleep(5)
+
+        theory_strategy = self._get_theory_strategy()
         try:
             TheorySolveStrategy(theory_strategy).do_work()
         except Exception as ex:
-            # AuxFunc().play_sound()
             print_log(
                 message='-> Выпала ошибка при решении теории. Скорее всего она закончилась',
                 exception=ex,
@@ -126,6 +132,17 @@ class TopicStrategy:
         self.last_question_text = AuxFunc().try_get_text(
             XpathResolver.question_text())  # remember last question page
         self.question_strategy = q_solve.solve_question()  # remember question solving strategy for current topic
+
+    def _get_theory_strategy(self) -> TheoryStrategy:
+        """Returns theory type"""
+        if not all([topic not in self.topic_name.lower() for topic in video_topics]):
+            return TheoryStrategyB()
+        elif AuxFunc().try_get_text(xpath=XpathResolver.quiz_form(), amount=1):
+            return TheoryStrategyC()
+        elif AuxFunc().try_get_text(xpath=XpathResolver.pdf_book(), amount=1):
+            return TheoryStrategyD()
+        else:
+            return TheoryStrategyA()
 
     def do_exception_question(self):
         """Check if there is exceptions question and call user"""

@@ -35,11 +35,14 @@ class CourseStrategy:
         topics = CourseWebData().get_course_topics()
         print_log('--> В курсе найдены следующие темы:')
         for num, topic in enumerate(topics):
-            print_log(f'*{num + 1}* {CourseWebData().get_course_name(topic)}')
+            print_log(f'*{num + 1}* {CourseWebData().get_topic_name(topic)}')
 
-        for topic_num in self.get_topics_from_user():
+        for topic_num in self.get_unsolved_topics():
             self.topic_attemps = 0
             self.solve(topic_num)
+            if not self.is_topic_solved(topic_num):
+                print_log('-> Не удалось решить тему.')
+                input('-> Реши тему самый кожаный мешок и нажми Enter')
 
         user_data = self.get_user_data()
         print_log(f'\n***************************** ИТОГ *********************************'
@@ -48,12 +51,13 @@ class CourseStrategy:
 
     def solve(self, topic_num: int):
         """Solving demand topic"""
-        if not self.is_last_topic_solved(topic_num):
+        if not self.is_topic_solved(topic_num - 1):
+            print_log('-> Пробую решить заново')
             self.solve(topic_num - 1)
         topic = self.get_next_topic_link(topic_num)
         AuxFunc().try_webclick(topic)
         time.sleep(10)
-        topic_name = CourseWebData().get_course_name(topic)
+        topic_name = CourseWebData().get_topic_name(topic)
         print_log(f'\n\n---> Выбираю тему: <{topic_name}>')
         try:
             self.continue_solve()
@@ -70,6 +74,19 @@ class CourseStrategy:
                       f'\nТема: {user_data.topic_name}'
                       f'\nКол-во вопросов: {user_data.questions_amount}'
                       f'\nКол-во кликнутых теорий: {user_data.theory_clicks}')
+
+    def get_unsolved_topics(self) -> List[int]:
+        """Returns all unsolved topics num"""
+        topics = CourseWebData().get_data()
+        unsolved_topics_num = []
+        for topic_num, topic in enumerate(topics):
+            if topic.status == '':
+                unsolved_topics_num.append(topic_num + 1)
+                continue
+            if all([status not in topic.status.lower() for status in self.topic_bad_status]):
+                continue
+            unsolved_topics_num.append(topic_num + 1)
+        return unsolved_topics_num
 
     @staticmethod
     def get_topics_from_user() -> List[int]:
@@ -102,18 +119,19 @@ class CourseStrategy:
         topic_link = CourseWebData().get_course_topics()[topic_num - 1]
         return topic_link
 
-    def is_last_topic_solved(self, topic_num: int) -> bool:
+    def is_topic_solved(self, topic_num: int) -> bool:
         """Returns True if last topic has been solved"""
         if topic_num <= 1:
             return True
+        time.sleep(10)
         topics_status = AuxFunc().try_get_text(XpathResolver.topic_status())
         try:
-            topic_status = topics_status[topic_num - 2]
+            topic_status = topics_status[topic_num - 1]
         except IndexError:
             return False
         if (topic_status is None or
                 not all([status not in topic_status.lower() for status in self.topic_bad_status])):
-            print_log('-> Предъидущая тема не решена. Пробую решить заново')
+            print_log('-> Тема не решена.')
             return False
         return True
 

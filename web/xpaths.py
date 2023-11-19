@@ -1,17 +1,15 @@
 import time
-
 from selenium.webdriver import ActionChains
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
-
 from typing import List
 
-# from aux_functions import AuxFunc
+from aux_functions import AuxFunc
+from app_types import TopicData
 import aux_functions as af
 import db
 from exceptions import NoFoundedElement
-
 from driver_init import driver
 
 
@@ -123,7 +121,8 @@ class XpathResolver:
     def answer_button():
         """Button <ОТВЕТИТЬ>"""
         return [
-            '//button[@class="quiz-control-panel__button"]'
+            '//button[@class="quiz-control-panel__button" '
+            'and not(@style="display: none;")]'
             '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
             '"ОТВЕТИТЬ")]',
 
@@ -149,7 +148,17 @@ class XpathResolver:
 
             '//button[@class="quiz-uikit-primary-button quiz-uikit-primary-button_size_medium"]'
             '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
-            '"ПРОДОЛЖИТЬ")]'
+            '"ПРОДОЛЖИТЬ")]',
+        ]
+
+    @staticmethod
+    @xpath_decorator(has_exception=False)
+    def continue_theory_button():
+        return [
+            '//button[@class="quiz-control-panel__button quiz-control-panel__button_show-arrow '
+            'quiz-control-panel__button_right-arrow" and not(@style="display: none;")]'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"ПРОДОЛЖИТЬ")]',
         ]
 
     @staticmethod
@@ -314,6 +323,36 @@ class XpathResolver:
             '//*[@class="choice-view__choice-container"]//*[@class="choice-view__mock-active-element"]'
         ]
 
+    @staticmethod
+    @xpath_decorator(has_exception=False)
+    def quiz_form():
+        """Xpath to define if quiz have a form (анкета)"""
+        return [
+            '//div[@class="player-shape-view"]'
+            '//*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"УКАЖИТЕ ВАШИ ДАННЫЕ")]'
+        ]
+
+    @staticmethod
+    @xpath_decorator(has_exception=False)
+    def pdf_book():
+        """Xpath to define if quiz have a pdf"""
+        return [
+            '//*[@class="viewer bookViewer"]',
+
+            '//*[@class="slideViewer"]'
+        ]
+
+    @staticmethod
+    @xpath_decorator(has_exception=False)
+    def next_pdf_page():
+        """Xpath for next pdf page button"""
+        return [
+            '//*[@class[contains(.,"icon next")]]/..',
+
+            '//button[@class="toolbarButton pageDown"]'
+        ]
+
 
 class TopicWebData:
 
@@ -391,11 +430,31 @@ class TopicWebData:
 
 
 class CourseWebData:
-    # def get_courses_name(self) -> List[str]:
-    #     return [course.get_attribute('innerText') for course in self._get_courses()]
+    def get_data(self) -> List[TopicData]:
+        """Retutns topics names and status"""
+        course_data = []
+        topics = self.get_course_topics()
+        topics_status = self.get_topics_status(len(topics))
+        for topic_num, topic_link in enumerate(topics):
+            course_data.append(TopicData(
+                name=self.get_topic_name(topic_link),
+                status=topics_status[topic_num]
+            ))
+        return course_data
 
     @staticmethod
-    def get_course_name(course: WebElement) -> str:
+    def get_topics_status(topics_amount: int) -> List[str]:
+        topics_status = AuxFunc().try_get_text(XpathResolver.topic_status())
+        all_topics_status = []
+        for topic_num in range(topics_amount + 1):
+            if topic_num > len(topics_status) - 1:
+                all_topics_status.extend([''] * (topics_amount - topic_num))
+                return all_topics_status
+            all_topics_status.append(topics_status[topic_num])
+        return all_topics_status
+
+    @staticmethod
+    def get_topic_name(course: WebElement) -> str:
         return course.get_attribute('innerText')
 
     @staticmethod

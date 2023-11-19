@@ -1,12 +1,13 @@
 import sys
 import time
 from typing import Union
-
 from playsound import playsound
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
+from abc import ABC, abstractmethod
 
+from app_types import FormField
 from config import MUSIC_FILE_PATH
 from driver_init import driver
 from aux_functions import AuxFunc
@@ -16,33 +17,43 @@ from web.xpaths import XpathResolver
 from logick.aux_funcs import RandomDelay
 
 
-class TheoryStrategy:
-    MAX_PAGE_LOAD = 10  # maximum attempts to check if page the same
-
-    def __init__(self, topic_name: str):
-        self.topic_name = topic_name
-        self.same_page_counter = 0
+class TheoryStrategy(ABC):
+    def __init__(self):
         self.theory_click_counter = 0
-        self.next_theory_button = XpathResolver.next_theory()
-        self.last_page_src = None
 
+    @abstractmethod
     def main(self):
         """Skips all theory"""
-        print_log('--> Прокликиваю теорию')
+        pass
 
-        # try to skip pdf if it exists
-        skip_pdf = PdfSkipper()
-        skip_pdf()
-
-        # skip general theory
-        while AuxFunc().try_click(xpath=self.next_theory_button, try_numb=3, window_numb=1):
-            self._click_theory()
+    @staticmethod
+    def go_next():
         AuxFunc().try_click(xpath=XpathResolver.goto_quiz_button(), try_numb=8)
         time.sleep(5)
         AuxFunc().try_click(xpath=XpathResolver.start_button(), try_numb=8)
         time.sleep(5)
         AuxFunc().try_click(xpath=XpathResolver.continue_button(), try_numb=8, window_numb=1)
         time.sleep(5)
+
+
+class TheoryStrategyA(TheoryStrategy):
+    """Solving theory where is standart window"""
+    MAX_PAGE_LOAD = 10  # maximum attempts to check if page the same
+
+    def __init__(self):
+        super().__init__()
+        self.same_page_counter = 0
+        self.next_theory_button = XpathResolver.next_theory()
+        self.last_page_src = None
+
+    def main(self):
+        print_log('--> Прокликиваю теорию')
+
+        # skip general theory
+        while AuxFunc().try_click(xpath=self.next_theory_button, try_numb=3, window_numb=1):
+            self._click_theory()
+
+        self.go_next()
 
     def _click_theory(self):
         current_page_src = driver.page_source
@@ -66,20 +77,13 @@ class TheoryStrategy:
         return False
 
 
-class TheoryStrategyA(TheoryStrategy):
-    """Solving theory where is standart window"""
-
-
-class TheoryStrategyB:
+class TheoryStrategyB(TheoryStrategy):
     """Solving theory where is only video"""
 
-    def __init__(self):
-        self.theory_click_counter = 0
-
     def main(self):
+        print_log('--> Пропускаю видео')
         for i in range(10):
             try:
-                # self._focus()
                 self._set_playback_speed()
                 self._mute_sound()
                 self._play_video()
@@ -101,17 +105,9 @@ class TheoryStrategyB:
         print_log('-> Жду окончания видео')
         time_left = 10
         while time_left:
-            # self._focus()
             progress_text = self._get_progress()
             time_left = self._get_time_left(progress_text)
             time.sleep(int(time_left / 10))
-
-    # @staticmethod
-    # def _focus():
-    #     """Focus on page"""
-    #     driver.switch_to.window(driver.window_handles[-1])
-    #     actions = ActionChains(driver)
-    #     actions.move_by_offset(0, 0).click().perform()
 
     @staticmethod
     def _show_control():
@@ -164,22 +160,50 @@ class TheoryStrategyB:
         return overall_time - video_timer
 
 
-class TheorySolveStrategy:
-    """Strategy for theory solving"""
+class TheoryStrategyC(TheoryStrategy):
+    """Solving theory where is feedback page"""
+    INPUT_DATA = {
+        'компания': 'ООО НСХ Азия дрилинг',
+        'должность': 'Пом. бурильщика КРС 5р',
+        'телефон': '89222886027',
+        'адрес': 'г. Муравленко, ул. Муравленко, д. 6, кв. 22'
+    }
 
-    def __init__(self, strategy: TheoryStrategy):
-        self.strategy = strategy
+    def main(self):
+        print_log('--> Заполняю анкету обратной связи')
 
-    def do_work(self):
-        self.strategy.main()
+        for data in self.get_form_data():
+            if data.input_name in self.INPUT_DATA:
+                data.input_link.send_keys(self.INPUT_DATA[data.input_name])
+            time.sleep(1)
+
+        AuxFunc().try_click(XpathResolver.answer_button(), window_numb=1)
+        AuxFunc().try_click(XpathResolver.continue_theory_button(), window_numb=1)
+        # self.go_next()
+
+    @staticmethod
+    def get_form_data():
+        def parse_string(string: str) -> str:
+            """Returns only alphabetic characters from string"""
+            return ''.join([char.lower() for char in string if char.isalpha()])
+
+        input_name_mask = '//*[@class="field-view"]'
+        input_name_fields = driver.find_elements(By.XPATH, input_name_mask)
+        input_link_mask = '//*[@class="field-view"]/input'
+        input_link_fields = driver.find_elements(By.XPATH, input_link_mask)
+
+        return [FormField(
+            input_name=parse_string(name.text),
+            input_link=link
+        ) for name, link in zip(input_name_fields, input_link_fields)]
 
 
-class PdfSkipper:
-    """Class for skipping pdf files"""
+class TheoryStrategyD(TheoryStrategy):
+    """Solving theory where is pdf"""
 
-    def __call__(self, *args, **kwargs):
-        """Skip all pdf pages"""
-        print_log(message='Пробую скипнуть pdf, если он есть', silent=True)
+    def main(self):
+        print_log('--> Листаю PDF файл')
+
         while self.go_next_page():
             if not self.go_next_page():
                 break
@@ -187,7 +211,7 @@ class PdfSkipper:
     @staticmethod
     def get_next_page_button() -> Union[WebElement, None]:
         """Return next pdf page button"""
-        next_page_mask = '//*[@class[contains(.,"icon next")]]/..'
+        next_page_mask = XpathResolver.next_pdf_page()
         for i in range(3):
             driver.switch_to.window(driver.window_handles[-1])
             iframe = driver.find_element(By.XPATH, '//iframe')
@@ -211,3 +235,13 @@ class PdfSkipper:
         next_button.click()
         time.sleep(1)
         return True
+
+
+class TheorySolveStrategy:
+    """Strategy for theory solving"""
+
+    def __init__(self, strategy: TheoryStrategy):
+        self.strategy = strategy
+
+    def do_work(self):
+        self.strategy.main()
