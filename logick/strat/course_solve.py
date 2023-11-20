@@ -137,6 +137,7 @@ class CourseStrategy:
 
     def repeat_solve(self, topic_num: int):
         """Repeat topic solve"""
+        self.end_solve()
         driver.get(self.course_url)
         time.sleep(10)
         self.topic_attemps += 1
