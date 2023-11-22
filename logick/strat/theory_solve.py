@@ -26,6 +26,10 @@ class TheoryStrategy(ABC):
         """Skips all theory"""
         pass
 
+    def print_theory_counter(self):
+        sys.stdout.write('\r' + f"Количество успешных кликов: {self.theory_click_counter}")  # print on one line
+        sys.stdout.flush()
+
     @staticmethod
     def go_next():
         AuxFunc().try_click(xpath=XpathResolver.goto_quiz_button(), try_numb=8)
@@ -51,19 +55,18 @@ class TheoryStrategyA(TheoryStrategy):
 
         # skip general theory
         while AuxFunc().try_click(xpath=self.next_theory_button, try_numb=3, window_numb=1):
-            self._click_theory()
+            self._theory_click_counter()
 
         self.go_next()
 
-    def _click_theory(self):
+    def _theory_click_counter(self):
         current_page_src = driver.page_source
         # check if page the same
         if self._has_same_page(current_page_src=current_page_src, last_page_src=self.last_page_src):
             raise TheoryNotChanges
         self.last_page_src = current_page_src
         time.sleep(RandomDelay.get_theory_delay())
-        sys.stdout.write('\r' + f"Количество успешных кликов: {self.theory_click_counter}")  # print on one line
-        sys.stdout.flush()
+        self.print_theory_counter()
 
     def _has_same_page(self, current_page_src: str, last_page_src: str):
         """Checks if page src has been changed since 10 attempts"""
@@ -170,16 +173,18 @@ class TheoryStrategyC(TheoryStrategy):
     }
 
     def main(self):
-        print_log('--> Заполняю анкету обратной связи')
-
-        for data in self.get_form_data():
-            if data.input_name in self.INPUT_DATA:
-                data.input_link.send_keys(self.INPUT_DATA[data.input_name])
-            time.sleep(1)
-
+        playsound(MUSIC_FILE_PATH)
+        print_log('--> Заполни анкету обратной связи')
+        input('-> Нажми Enter после того как заполнишь')
+        # print_log('--> Заполняю анкету обратной связи')
+        #
+        # for data in self.get_form_data():
+        #     if data.input_name in self.INPUT_DATA:
+        #         data.input_link.send_keys(self.INPUT_DATA[data.input_name])
+        #     time.sleep(1)
+        #
         AuxFunc().try_click(XpathResolver.answer_button(), window_numb=1)
         AuxFunc().try_click(XpathResolver.continue_theory_button(), window_numb=1)
-        # self.go_next()
 
     @staticmethod
     def get_form_data():
@@ -234,6 +239,7 @@ class TheoryStrategyD(TheoryStrategy):
             return False
         next_button.click()
         time.sleep(1)
+        self.print_theory_counter()
         return True
 
 

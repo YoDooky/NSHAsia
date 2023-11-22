@@ -234,11 +234,11 @@ class TopicStrategy:
         try:
             question_text = AuxFunc().try_get_text(
                 xpath=XpathResolver.question_text(),
-                try_numb=2
+                try_numb=5
             )
             answer_text = AuxFunc().try_get_text(
                 xpath=XpathResolver.answer_text(),
-                try_numb=2
+                try_numb=5
             )
         except NoFoundedElement:
             return False

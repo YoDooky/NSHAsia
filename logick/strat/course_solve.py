@@ -37,12 +37,14 @@ class CourseStrategy:
         for num, topic in enumerate(topics):
             print_log(f'*{num + 1}* {CourseWebData().get_topic_name(topic)}')
 
-        for topic_num in self.get_unsolved_topics():
+        # for topic_num in self.get_unsolved_topics():
+        for topic_num in self.get_topics_from_user():
             self.topic_attemps = 0
             self.solve(topic_num)
             if not self.is_topic_solved(topic_num):
+                playsound(MUSIC_FILE_PATH)
                 print_log('-> Не удалось решить тему.')
-                input('-> Реши тему самый кожаный мешок и нажми Enter')
+                input('-> Реши тему кожаный мешок и нажми Enter')
 
         user_data = self.get_user_data()
         print_log(f'\n***************************** ИТОГ *********************************'

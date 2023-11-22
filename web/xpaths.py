@@ -340,7 +340,9 @@ class XpathResolver:
         return [
             '//*[@class="viewer bookViewer"]',
 
-            '//*[@class="slideViewer"]'
+            '//*[@class="slideViewer"]',
+
+            '//*[@class="viewer bookViewer onePage"]'
         ]
 
     @staticmethod
