@@ -41,17 +41,19 @@ class CourseStrategy:
         for topic_num in self.get_topics_from_user():
             self.topic_attemps = 0
             self.solve(topic_num)
-            for try_numb in range(5):
+            max_attempts = 5
+            for try_numb in range(max_attempts):
                 if self.is_topic_solved(topic_num):
                     break
                 print_log('-> Не удалось решить тему. Пробую еще раз...')
-                self.end_solve()
-                self.set_popup(False)
-                self.solve(topic_num)
-                if try_numb >= 2:
-                    print_log(f'-> Не удалось решить тему в течении {try_numb} попыток')
-                    playsound(MUSIC_FILE_PATH)
-                    input('-> Реши тему кожаный мешок и нажми Enter')
+                self.repeat_solve(topic_num)
+                # self.end_solve()
+                # self.set_popup(False)
+                # self.solve(topic_num)
+                # if try_numb >= max_attempts - 1:
+                #     print_log(f'-> Не удалось решить тему в течении {try_numb} попыток')
+                #     playsound(MUSIC_FILE_PATH)
+                #     input('-> Реши тему кожаный мешок и нажми Enter')
 
         user_data = self.get_user_data()
         print_log(f'\n***************************** ИТОГ *********************************'
@@ -69,7 +71,7 @@ class CourseStrategy:
         topic_name = CourseWebData().get_topic_name(topic)
         print_log(f'\n\n---> Выбираю тему: <{topic_name}>')
         try:
-            self.set_popup()
+            self.set_popup(False)
             TopicSolve().main(topic_name)
         except QuizEnded:
             return
