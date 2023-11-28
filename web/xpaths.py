@@ -174,7 +174,7 @@ class XpathResolver:
     @staticmethod
     @xpath_decorator(has_exception=False)
     def popup_approve():
-        """Button <Да> in pop-up window to resume quiz"""
+        """Button <НЕТ> in pop-up window to resume quiz"""
         return [
             '//button[@class="message-box-buttons-panel__window-button" '
             'and contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
@@ -184,6 +184,21 @@ class XpathResolver:
             'uikit-primary-button_size_medium message-box-buttons__window-button"]'
             '/*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
             '"НЕТ")]'
+        ]
+
+    @staticmethod
+    @xpath_decorator(has_exception=False)
+    def popup_disagree():
+        """Button <ДА> in pop-up window to resume quiz"""
+        return [
+            '//button[@class="message-box-buttons-panel__window-button" '
+            'and contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"ДА")]',
+
+            '//button[@class="uikit-primary-button '
+            'uikit-primary-button_size_medium message-box-buttons__window-button"]'
+            '/*[contains(translate(text(),"абвгдежзийклмнопрстуфхцчшщъыьэюя","АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"),'
+            '"ДА")]'
         ]
 
     @staticmethod

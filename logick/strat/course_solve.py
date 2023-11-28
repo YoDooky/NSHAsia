@@ -41,10 +41,17 @@ class CourseStrategy:
         for topic_num in self.get_topics_from_user():
             self.topic_attemps = 0
             self.solve(topic_num)
-            if not self.is_topic_solved(topic_num):
-                playsound(MUSIC_FILE_PATH)
-                print_log('-> Не удалось решить тему.')
-                input('-> Реши тему кожаный мешок и нажми Enter')
+            for try_numb in range(5):
+                if self.is_topic_solved(topic_num):
+                    break
+                print_log('-> Не удалось решить тему. Пробую еще раз...')
+                self.end_solve()
+                self.set_popup(False)
+                self.solve(topic_num)
+                if try_numb >= 2:
+                    print_log(f'-> Не удалось решить тему в течении {try_numb} попыток')
+                    playsound(MUSIC_FILE_PATH)
+                    input('-> Реши тему кожаный мешок и нажми Enter')
 
         user_data = self.get_user_data()
         print_log(f'\n***************************** ИТОГ *********************************'
@@ -62,7 +69,7 @@ class CourseStrategy:
         topic_name = CourseWebData().get_topic_name(topic)
         print_log(f'\n\n---> Выбираю тему: <{topic_name}>')
         try:
-            self.continue_solve()
+            self.set_popup()
             TopicSolve().main(topic_name)
         except QuizEnded:
             return
@@ -152,11 +159,14 @@ class CourseStrategy:
         self.solve(topic_num)
 
     @staticmethod
-    def continue_solve():
+    def set_popup(approve: bool = True):
         """Intercepts pop-up window which asks to continue quiz"""
         try:
             AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
-            AuxFunc().try_click(xpath=XpathResolver.popup_approve(), try_numb=3)
+            if approve:
+                AuxFunc().try_click(xpath=XpathResolver.popup_approve(), try_numb=3)
+            else:
+                AuxFunc().try_click(xpath=XpathResolver.popup_disagree(), try_numb=3)
             time.sleep(3)
         except NoAlertPresentException:
             pass
