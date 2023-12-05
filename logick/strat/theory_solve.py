@@ -13,13 +13,15 @@ from driver_init import driver
 from aux_functions import AuxFunc
 from exceptions import TheoryNotChanges
 from log import print_log
+from logick.strat import utils
 from web.xpaths import XpathResolver
-from logick.aux_funcs import RandomDelay
+from logick.strat.utils import RandomDelay
 
 
 class TheoryStrategy(ABC):
     def __init__(self):
         self.theory_click_counter = 0
+        self.theory_buttons_roadmap = None
 
     @abstractmethod
     def main(self):
@@ -30,14 +32,25 @@ class TheoryStrategy(ABC):
         sys.stdout.write('\r' + f"Количество успешных кликов: {self.theory_click_counter}")  # print on one line
         sys.stdout.flush()
 
-    @staticmethod
-    def go_next():
-        AuxFunc().try_click(xpath=XpathResolver.goto_quiz_button(), try_numb=8)
-        time.sleep(5)
-        AuxFunc().try_click(xpath=XpathResolver.start_button(), try_numb=8)
-        time.sleep(5)
-        AuxFunc().try_click(xpath=XpathResolver.continue_button(), try_numb=8, window_numb=1)
-        time.sleep(5)
+    # @staticmethod
+    def go_next(self):
+        buttons = [
+            XpathResolver.goto_quiz_button,
+            XpathResolver.start_button,
+            XpathResolver.continue_button
+        ]
+        if self.theory_buttons_roadmap is None:
+            self.theory_buttons_roadmap = buttons
+            for button in self.theory_buttons_roadmap:
+                if not AuxFunc().try_click(xpath=button(), try_numb=8):
+                    self.theory_buttons_roadmap.remove(button)
+                # if there is question and answers return
+                if utils.is_quiz():
+                    return
+            return
+            # if theory buttons roadmap exist then iterate through it
+        for button in self.theory_buttons_roadmap:
+            AuxFunc().try_click(xpath=button(), try_numb=8)
 
 
 class TheoryStrategyA(TheoryStrategy):
@@ -52,14 +65,20 @@ class TheoryStrategyA(TheoryStrategy):
 
     def main(self):
         print_log('--> Прокликиваю теорию')
-
+        # at some quizes button <Далее> unavaible before the click on the next element on table of contents
+        # (treecontrol with scroll)
+        AuxFunc().try_click(
+            xpath=XpathResolver.next_theory_treecontrol(),
+            element=1,
+            try_numb=3,
+            window_numb=1
+        )
         # skip general theory
         while AuxFunc().try_click(xpath=self.next_theory_button, try_numb=3, window_numb=1):
-            self._theory_click_counter()
-
+            self._count_theory_clicks()
         self.go_next()
 
-    def _theory_click_counter(self):
+    def _count_theory_clicks(self):
         current_page_src = driver.page_source
         # check if page the same
         if self._has_same_page(current_page_src=current_page_src, last_page_src=self.last_page_src):

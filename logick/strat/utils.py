@@ -1,10 +1,16 @@
 import itertools
+import time
 from random import randint
 from typing import List
 
+from selenium.common import NoAlertPresentException
+
+from aux_functions import AuxFunc
 from config.read_config import read_config_file
 from db import TempDbDataController, TempDbAnswerController, WebData, TempDbData, TempDbAnswer
-from exceptions import MaxVariantsExceeded
+from driver_init import driver
+from exceptions import MaxVariantsExceeded, NoFoundedElement
+from web import XpathResolver
 
 
 class RandomDelay:
@@ -72,9 +78,50 @@ class GenerateVariant:
         return webdata.answers[0].text
 
 
-# def clean_text(text: str) -> str:
-#     """Clears text spec symbols"""
-#     spec_symbols_accord = {'\xa0': ' ', '\u200B': ''}
-#     for symbol in spec_symbols_accord:
-#         text = text.replace(symbol, spec_symbols_accord.get(symbol))
-#     return ' '.join(text.split())
+def set_popup(approve: bool = True):
+    """
+    Intercepts pop-up window which asks to continue quiz
+    :param approve: if True then it will choose <Да> button (means repeat quiz from last stage)
+    :return: None
+    """
+    AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
+    if approve:
+        AuxFunc().try_click(xpath=XpathResolver.popup_approve(), try_numb=3)
+    else:
+        AuxFunc().try_click(xpath=XpathResolver.popup_disagree(), try_numb=3)
+    time.sleep(3)
+
+
+def close_alert():
+    """
+    CLoses browser alert window
+    :return:
+    """
+    time.sleep(1)
+    try:
+        driver.switch_to.alert.accept()
+    except NoAlertPresentException:
+        return
+
+
+def is_quiz() -> bool:
+    """
+    Check if there is quiz question
+    :return: True if there is quiz on page
+    """
+    try:
+        question_text = AuxFunc().try_get_text(
+            xpath=XpathResolver.question_text(),
+            try_numb=5
+        )
+        answer_text = AuxFunc().try_get_text(
+            xpath=XpathResolver.answer_text(),
+            try_numb=5
+        )
+    except NoFoundedElement:
+        return False
+    if question_text is None or answer_text is None:
+        return False
+    if len(question_text) > 1:
+        return False
+    return True

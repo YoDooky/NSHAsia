@@ -8,7 +8,7 @@ from driver_init import driver
 from db.sql_to_excel import excel_data
 from logick.solve.course_solve import CourseSolve
 
-# noinspection GrazieInspection
+
 if __name__ == '__main__':
     init_logging_config()  # initiate logging config
     config.Folders.init_folders()

@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Type, List
 
 from playsound import playsound
-from selenium.common import NoAlertPresentException
 from selenium.webdriver.remote.webelement import WebElement
 
 from config import MUSIC_FILE_PATH
@@ -13,6 +12,7 @@ from aux_functions import AuxFunc
 from exceptions import QuizEnded
 from log import print_log
 from logick.solve.topic_solve import TopicSolve
+from logick.strat import utils
 from web import CourseWebData, XpathResolver
 
 
@@ -24,7 +24,7 @@ class UserData:
 
 
 class CourseStrategy:
-    MAX_TOPIC_ATTEMPS = 3  # maximum topic solve attemps
+    MAX_TOPIC_ATTEMPS = 4  # maximum topic solve attemps
 
     def __init__(self):
         self.course_url = driver.current_url
@@ -41,8 +41,7 @@ class CourseStrategy:
         for topic_num in self.get_topics_from_user():
             self.topic_attemps = 0
             self.solve(topic_num)
-            max_attempts = 5
-            for try_numb in range(max_attempts):
+            for try_numb in range(self.MAX_TOPIC_ATTEMPS):
                 if self.is_topic_solved(topic_num):
                     break
                 print_log('-> Не удалось решить тему. Пробую еще раз...')
@@ -71,7 +70,7 @@ class CourseStrategy:
         topic_name = CourseWebData().get_topic_name(topic)
         print_log(f'\n\n---> Выбираю тему: <{topic_name}>')
         try:
-            self.set_popup(False)
+            utils.set_popup(False)
             TopicSolve().main(topic_name)
         except QuizEnded:
             return
@@ -160,44 +159,23 @@ class CourseStrategy:
             return
         self.solve(topic_num)
 
-    @staticmethod
-    def set_popup(approve: bool = True):
-        """Intercepts pop-up window which asks to continue quiz"""
-        try:
-            AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
-            if approve:
-                AuxFunc().try_click(xpath=XpathResolver.popup_approve(), try_numb=3)
-            else:
-                AuxFunc().try_click(xpath=XpathResolver.popup_disagree(), try_numb=3)
-            time.sleep(3)
-        except NoAlertPresentException:
-            pass
-
     def end_solve(self):
         """Close quiz window"""
         time.sleep(10)
         try:
             if len(driver.window_handles) > 1:
                 driver.switch_to.window(driver.window_handles[-1])
-                self.close_alert()
+                utils.close_alert()
                 driver.close()
                 time.sleep(1)
             driver.switch_to.window(driver.window_handles[0])
             driver.get(self.course_url)
-            self.close_alert()
+            utils.close_alert()
             time.sleep(10)
         except Exception as ex:
             playsound(MUSIC_FILE_PATH)
             print_log(message='[ERR] Не могу завершить тему.', exception=ex)
             input('\n-> Перейди на экран с темами и нажми Enter')
-
-    @staticmethod
-    def close_alert():
-        time.sleep(1)
-        try:
-            driver.switch_to.alert.accept()
-        except NoAlertPresentException:
-            return
 
     @staticmethod
     def get_user_data(topic_name: str = '') -> UserData:

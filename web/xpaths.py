@@ -5,7 +5,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from typing import List
 
-from aux_functions import AuxFunc
 from app_types import TopicData
 import aux_functions as af
 import db
@@ -162,7 +161,7 @@ class XpathResolver:
         ]
 
     @staticmethod
-    @xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=False)
     def repeat_button():
         """Button <Повторить тест>"""
         return [
@@ -173,7 +172,7 @@ class XpathResolver:
 
     @staticmethod
     @xpath_decorator(has_exception=False)
-    def popup_approve():
+    def popup_disagree():
         """Button <НЕТ> in pop-up window to resume quiz"""
         return [
             '//button[@class="message-box-buttons-panel__window-button" '
@@ -188,7 +187,7 @@ class XpathResolver:
 
     @staticmethod
     @xpath_decorator(has_exception=False)
-    def popup_disagree():
+    def popup_approve():
         """Button <ДА> in pop-up window to resume quiz"""
         return [
             '//button[@class="message-box-buttons-panel__window-button" '
@@ -223,6 +222,18 @@ class XpathResolver:
 
     @staticmethod
     @xpath_decorator(has_exception=False)
+    def next_theory_treecontrol():
+        """
+        At some quizes button <Далее> unavaible before the click on the next
+        element on table of contents (treecontrol with scroll)
+        """
+        return [
+            '//div[@class="treecontrol treecontrol_with-scroll"]'
+            '//div[@class[contains(.,"slide-item-view slide-item-view_with-thumbnail")]]'
+        ]
+
+    @staticmethod
+    @xpath_decorator(has_exception=False)
     def next_test_part():
         """Button <ДАЛЕЕ> for topics where is many theory and test"""
         return [
@@ -247,6 +258,15 @@ class XpathResolver:
             'and not(@style="display: none;")]',
 
             '//*[@class="quiz-control-panel__question-score-info"]'
+        ]
+
+    @staticmethod
+    @xpath_decorator(has_exception=False)
+    def question_timer():
+        """Question timer"""
+        return [
+            '//div[@class="quiz-timer-view quiz-timer-view_left quiz-timer-view_with-separator" '
+            'and not(@style="display: none;")]//div[@class="quiz-timer-view__label"]'
         ]
 
     @staticmethod
@@ -318,14 +338,22 @@ class XpathResolver:
             'published-rich-text_wrap-text player-shape-view__shape-view-rich-text-view_wrap-text"]'
         ]
 
+    # @staticmethod
+    # @xpath_decorator(has_exception=True)
+    # def answer_text():
+    #     """Answers of current topic"""
+    #     return [
+    #         '//*[@class="choice-view"]//*[@class="choice-content"]',
+    #
+    #         '//*[@class="choice-view__choice-container"]//*[@class="choice-content"]'
+    #     ]
+
     @staticmethod
     @xpath_decorator(has_exception=True)
     def answer_text():
         """Answers of current topic"""
         return [
-            '//*[@class="choice-view"]//*[@class="choice-content"]',
-
-            '//*[@class="choice-view__choice-container"]//*[@class="choice-content"]'
+            '//div[@class="choice-content"]'
         ]
 
     @staticmethod
@@ -404,6 +432,7 @@ class TopicWebData:
         mask = XpathResolver.answer_text()
         try:
             for element in driver.find_elements(By.XPATH, mask):
+                driver.execute_script("arguments[0].scrollIntoView(true);", element)
                 if self.__clean_text(element.text) == answer_text:
                     return element
         except NoSuchElementException:
@@ -461,7 +490,7 @@ class CourseWebData:
 
     @staticmethod
     def get_topics_status(topics_amount: int) -> List[str]:
-        topics_status = AuxFunc().try_get_text(XpathResolver.topic_status())
+        topics_status = af.AuxFunc().try_get_text(XpathResolver.topic_status())
         all_topics_status = []
         for topic_num in range(topics_amount + 1):
             if topic_num > len(topics_status) - 1:

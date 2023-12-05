@@ -32,7 +32,14 @@ class AuxFunc:
                       f'{timeout} секунд', False)
             return False
 
-    def try_click(self, xpath, element=0, window_numb=None, try_numb=10, scroll_to=True) -> bool:
+    def try_click(
+            self,
+            xpath: str,
+            element: int = 0,
+            window_numb=None,
+            try_numb: int = 10,
+            scroll_to: bool = True
+    ) -> bool:
         """функция для попыток клика по элементу"""
         for i in range(try_numb):
             try:
@@ -62,18 +69,17 @@ class AuxFunc:
         return False
 
     @staticmethod
-    def try_webclick(element: WebElement, try_numb: int = 5):
+    def try_webclick(element: WebElement, try_numb: int = 5) -> bool:
         for i in range(try_numb):
             try:
                 driver.execute_script("arguments[0].scrollIntoView(true);", element)
                 element.click()
-                return
+                return True
             except Exception as ex:
-                if i >= try_numb - 1:
-                    logging.exception(f"{ex}\nAn error occurred during trying to click")
-                    break
+                logging.exception(f"{ex}\nAn error occurred during trying to click")
                 time.sleep(1)
                 continue
+        return False
 
     @staticmethod
     def try_get_text(xpath, amount=0, try_numb=10) -> Union[str, List]:

@@ -53,8 +53,8 @@ driver = BrowserDriver().browser
 #  2. Run chrome in debug mode via cmd(terminal):
 #               chrome.exe -remote-debugging-port=9222 -user-data-dir="D:\selenium\RemoteProfile"
 #  3. After that use singleton of current driver_init.py file in your tests
-
-
+#
+#
 # from selenium import webdriver
 # from selenium.webdriver.chrome.options import Options
 # import logging

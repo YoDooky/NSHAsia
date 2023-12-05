@@ -1,17 +1,87 @@
 import re
-from typing import Union, Type
-
+import time
+from typing import Union, Type, List
 from playsound import playsound
+from selenium.webdriver.remote.webelement import WebElement
 
 from config import MUSIC_FILE_PATH
-from db import DbDataController, DbAnswerController, WebDataController, TempDbDataController, write_webdata_to_db, \
-    DbData, DbAnswer
-from exceptions import NoSelectedAnswer, NoAnswerResult, ImpossibleToClick
-from logick.click import click_answer
-from logick.solve import question_solve
+from db import (
+    write_webdata_to_db,
+    DbDataController,
+    DbAnswerController,
+    WebDataController,
+    TempDbDataController,
+    DbData,
+    DbAnswer,
+    WebData,
+    TempDbData
+)
+from exceptions import NoSelectedAnswer, NoAnswerResult
+from logick.strat.utils import RandomDelay
 from web.xpaths import XpathResolver
 from aux_functions import AuxFunc
+from web.xpaths import TopicWebData
 from log import print_log
+from logick.strat.utils import GenerateVariant, CalculateVariants
+
+
+def validate_db_data(main_data: Union[WebData, DbData, TempDbData],
+                     comp_data: Union[WebData, DbData, TempDbData]) -> bool:
+    """Checks if there is same data in both data"""
+    # compare question text
+    if main_data.question != comp_data.question:
+        return False
+    # compare answers amount
+    if len(main_data.answers) != len(comp_data.answers):
+        return False
+    # compare answers text
+    comp_data_answers = [answer.text for answer in comp_data.answers]
+    for answer in main_data.answers:
+        if answer.text not in comp_data_answers:
+            return False
+    return True
+
+
+class AnswerChoice:
+    @staticmethod
+    def get_answers_from_temp_db() -> List[WebElement]:
+        """Returns answer from TempDbData. If no data in TempDbData then returns first answer"""
+        web_data = WebDataController().read()
+        temp_data = TempDbDataController().read()
+        for temp in temp_data:
+            if not validate_db_data(main_data=temp, comp_data=web_data[0]):
+                continue
+            next_answers = CalculateVariants().get_next_variants(data=temp,
+                                                                 prev_variant_num=temp.last_answer_combination)
+            print_log(f'--> Вопрос найден во временной базе: \n {temp.question}'
+                      f'\n-> Выбираю ответы на вопрос из временной базы: \n {next_answers}')
+            return [TopicWebData().get_link(answer) for answer in next_answers]
+        first_answer = GenerateVariant().generate(web_data[0])
+        print_log(f'--> Вопроса нет в базах: \n {web_data[0].question}'
+                  f'\n-> Выбираю от пизды (нет) ответ: \n {first_answer}')
+        return [TopicWebData().get_link(first_answer)]
+
+    @staticmethod
+    def get_db_right_answers(db_data: List[DbData]) -> List[str]:
+        web_data = WebDataController().read()
+        for db in db_data:
+            if not validate_db_data(main_data=db, comp_data=web_data[0]):
+                continue
+            return [answer.text for answer in db.answers if answer.is_correct]
+
+    def get_right_answers_links(self) -> List[WebElement]:
+        """Returns answer from DbData. If no data in DbData then returns next answer from TempDbData"""
+        db_data = DbDataController().read()
+        web_data = WebDataController().read()
+        for db in db_data:
+            if not validate_db_data(main_data=db, comp_data=web_data[0]):
+                continue
+            right_answers = self.get_db_right_answers(db_data)
+            print_log(f'--> Вопрос найден в базе: \n {db.question}'
+                      f'\n-> Выбираю ответы на вопрос из базы: \n '
+                      f'{[answer.text for answer in db.answers if answer.is_correct]}')
+            return [TopicWebData().get_link(answer) for answer in right_answers]
+        return self.get_answers_from_temp_db()
 
 
 class QuestionStrategy:
@@ -20,7 +90,7 @@ class QuestionStrategy:
 
     def solve_question(self):
         write_webdata_to_db()
-        links = question_solve.AnswerChoice().get_right_answers_links()
+        links = AnswerChoice().get_right_answers_links()
 
         if not self.choose_answer(links):
             return
@@ -34,12 +104,14 @@ class QuestionStrategy:
             self.write_if_wrong_result()
 
     @staticmethod
-    def choose_answer(links) -> bool:
-        if not click_answer(links):
-            playsound(MUSIC_FILE_PATH)
-            print_log('[ERR]Не удалось кликнуть по ответу')
-            input('Выбери ответ, нажми <ответить> (если есть) и для продолжения нажми Enter...')
-            return False
+    def choose_answer(links: List[WebElement]) -> bool:
+        for link in links:
+            time.sleep(RandomDelay.get_question_delay())
+            if not AuxFunc.try_webclick(link):
+                playsound(MUSIC_FILE_PATH)
+                print_log('[ERR]Не удалось кликнуть по ответу')
+                input('Выбери ответ, нажми <Ответить> (если есть) и для продолжения нажми Enter...')
+                return False
         return True
 
     @staticmethod
@@ -61,7 +133,7 @@ class QuestionStrategy:
         web_data = WebDataController().read()
         temp_data = TempDbDataController().read()
         for temp in temp_data:
-            if not question_solve.validate_db_data(main_data=temp, comp_data=web_data[0]):
+            if not validate_db_data(main_data=temp, comp_data=web_data[0]):
                 continue
             TempDbDataController().update(id_=temp.id,
                                           data={'last_answer_combination': temp.current_answer_combination})
@@ -92,7 +164,7 @@ class QuestionStrategy:
         """Check for same data in temp db and delete it"""
         temp_data = TempDbDataController().read()
         for temp in temp_data:
-            if not question_solve.validate_db_data(main_data=temp, comp_data=web_data[0]):
+            if not validate_db_data(main_data=temp, comp_data=web_data[0]):
                 continue
             TempDbDataController().delete(temp.id)
 
@@ -101,7 +173,7 @@ class QuestionStrategy:
         """Check for same data in db with correct answers"""
         db_data = DbDataController().read()
         for db in db_data:
-            if not question_solve.validate_db_data(main_data=db, comp_data=web_data[0]):
+            if not validate_db_data(main_data=db, comp_data=web_data[0]):
                 continue
             return True
         return False
@@ -122,7 +194,7 @@ class QuestionStrategyB(QuestionStrategy):
 
     def solve_question(self):
         write_webdata_to_db()
-        links = question_solve.AnswerChoice().get_right_answers_links()
+        links = AnswerChoice().get_right_answers_links()
         self.start_score = self.get_result_data()  # trying to get current topic result (if it exists)
 
         if not self.choose_answer(links):
