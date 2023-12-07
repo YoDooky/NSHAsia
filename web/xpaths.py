@@ -13,7 +13,7 @@ from driver_init import driver
 
 
 # DECORATOR
-def xpath_decorator(has_exception: bool = True):
+def xpath_decorator(has_exception: bool = True, ):
     """DECORATOR. Writes xpath for current topic to db"""
 
     def upper_wrapper(func):
@@ -295,7 +295,7 @@ class XpathResolver:
 
     @staticmethod
     @xpath_decorator(has_exception=True)
-    def quiz_score():
+    def quiz_result():
         """Question score label at the end of the topic"""
         return [
             '//*[@class="player-shape-view"]'
@@ -326,7 +326,12 @@ class XpathResolver:
 
     @staticmethod
     def topic_status() -> str:
-        """Topic status (Завершен, Пройден на X%, В процессе, Не начат"""
+        """Topic status (Завершен, Пройден на X%, В процессе, Не начат)"""
+        return '//*[@class="xed2c2__text xed2c2__text_type_none"]'
+
+    @staticmethod
+    def topic_type() -> str:
+        """Topic type (Страница, Учебный материал, Видео и т.п.)"""
         return '//*[@class="xed2c2__text xed2c2__text_type_none"]'
 
     @staticmethod
@@ -484,7 +489,9 @@ class CourseWebData:
         for topic_num, topic_link in enumerate(topics):
             course_data.append(TopicData(
                 name=self.get_topic_name(topic_link),
-                status=topics_status[topic_num]
+                status=topics_status[topic_num],
+                type=self.get_topic_type(topic_link),
+                link=topic_link
             ))
         return course_data
 
@@ -498,6 +505,10 @@ class CourseWebData:
                 return all_topics_status
             all_topics_status.append(topics_status[topic_num])
         return all_topics_status
+
+    @staticmethod
+    def get_topic_type(course: WebElement) -> str:
+        return course.find_element(By.XPATH, './ancestor::div[1]/div[2]').get_attribute('innerText')
 
     @staticmethod
     def get_topic_name(course: WebElement) -> str:

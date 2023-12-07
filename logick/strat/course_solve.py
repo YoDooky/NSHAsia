@@ -1,9 +1,7 @@
 import time
 from dataclasses import dataclass
 from typing import Type, List
-
 from playsound import playsound
-from selenium.webdriver.remote.webelement import WebElement
 
 from config import MUSIC_FILE_PATH
 from db import UserController
@@ -30,6 +28,8 @@ class CourseStrategy:
         self.course_url = driver.current_url
         self.topic_attemps = 0
         self.topic_bad_status = ['не начат', 'в процессе', 'не пройден']
+        self.course_topics = None
+        self.current_topic = None
 
     def main(self):
         topics = CourseWebData().get_course_topics()
@@ -46,14 +46,6 @@ class CourseStrategy:
                     break
                 print_log('-> Не удалось решить тему. Пробую еще раз...')
                 self.repeat_solve(topic_num)
-                # self.end_solve()
-                # self.set_popup(False)
-                # self.solve(topic_num)
-                # if try_numb >= max_attempts - 1:
-                #     print_log(f'-> Не удалось решить тему в течении {try_numb} попыток')
-                #     playsound(MUSIC_FILE_PATH)
-                #     input('-> Реши тему кожаный мешок и нажми Enter')
-
         user_data = self.get_user_data()
         print_log(f'\n***************************** ИТОГ *********************************'
                   f'\nВсего вопросов: {user_data.questions_amount}'
@@ -61,29 +53,27 @@ class CourseStrategy:
 
     def solve(self, topic_num: int):
         """Solving demand topic"""
+        self.course_topics = CourseWebData().get_data()
         if not self.is_topic_solved(topic_num - 1):
-            print_log('-> Пробую решить заново')
+            print_log(f'-> Пробую решить заново тему:'
+                      f'\n{self.course_topics[topic_num - 1]}')
             self.solve(topic_num - 1)
-        topic = self.get_next_topic_link(topic_num)
-        AuxFunc().try_webclick(topic)
+        self.current_topic = self.course_topics[topic_num - 1]
+        AuxFunc().try_webclick(self.current_topic.link)
         time.sleep(10)
-        topic_name = CourseWebData().get_topic_name(topic)
-        print_log(f'\n\n---> Выбираю тему: <{topic_name}>')
+        print_log(f'\n\n---> Выбираю тему: <{self.current_topic.name}>')
         try:
-            utils.set_popup(False)
-            TopicSolve().main(topic_name)
+            utils.set_popup(True)
+            TopicSolve().main(self.current_topic)
+            self.end_solve()
+            self.print_summary()
         except QuizEnded:
+            self.end_solve()
+            self.print_summary()
             return
         except Exception as ex:
             print_log(message='\n-> [ERR] Не смог решить тему. Пробую еще раз', exception=ex)
             self.repeat_solve(topic_num)
-        finally:
-            self.end_solve()
-            user_data = self.get_user_data(topic_name)
-            print_log(f'\n********************************************************************'
-                      f'\nТема: {user_data.topic_name}'
-                      f'\nКол-во вопросов: {user_data.questions_amount}'
-                      f'\nКол-во кликнутых теорий: {user_data.theory_clicks}')
 
     def get_unsolved_topics(self) -> List[int]:
         """Returns all unsolved topics num"""
@@ -122,26 +112,27 @@ class CourseStrategy:
         str_comma.sort()
         return str_comma
 
-    @staticmethod
-    def get_next_topic_link(topic_num: int) -> WebElement:
-        """Returns webelement by topic number"""
-        driver.switch_to.window(driver.window_handles[0])
-        topic_link = CourseWebData().get_course_topics()[topic_num - 1]
-        return topic_link
-
     def is_topic_solved(self, topic_num: int) -> bool:
         """Returns True if last topic has been solved"""
         if topic_num <= 1:
             return True
-        time.sleep(10)
-        topics_status = AuxFunc().try_get_text(XpathResolver.topic_status())
+        topics_status = None
+        for i in range(10):
+            driver.switch_to.window(driver.window_handles[-1])
+            topics_status = AuxFunc().try_get_text(XpathResolver.topic_status())
+            if topics_status:
+                break
+        if topics_status is None:
+            print_log(f'-> Не смог найти статус (решена / не решена) для темы:'
+                      f'\n {self.course_topics[topic_num - 1]}')
+            return False
         try:
             topic_status = topics_status[topic_num - 1]
         except IndexError:
             return False
-        if (topic_status is None or
-                not all([status not in topic_status.lower() for status in self.topic_bad_status])):
-            print_log('-> Тема не решена.')
+        if not all([status not in topic_status.lower() for status in self.topic_bad_status]):
+            print_log(f'-> Не решена тема:'
+                      f'\n{self.course_topics[topic_num - 1]}')
             return False
         return True
 
@@ -160,7 +151,7 @@ class CourseStrategy:
         self.solve(topic_num)
 
     def end_solve(self):
-        """Close quiz window"""
+        """Close topic window and got to course topics"""
         time.sleep(10)
         try:
             if len(driver.window_handles) > 1:
@@ -176,6 +167,14 @@ class CourseStrategy:
             playsound(MUSIC_FILE_PATH)
             print_log(message='[ERR] Не могу завершить тему.', exception=ex)
             input('\n-> Перейди на экран с темами и нажми Enter')
+
+    def print_summary(self):
+        """Print topics summary"""
+        user_data = self.get_user_data(self.current_topic.name)
+        print_log(f'\n********************************************************************'
+                  f'\nТема: {user_data.topic_name}'
+                  f'\nКол-во вопросов: {user_data.questions_amount}'
+                  f'\nКол-во кликнутых теорий: {user_data.theory_clicks}')
 
     @staticmethod
     def get_user_data(topic_name: str = '') -> UserData:

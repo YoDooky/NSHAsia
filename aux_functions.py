@@ -36,18 +36,24 @@ class AuxFunc:
             self,
             xpath: str,
             element: int = 0,
-            window_numb=None,
+            focus_on=False,
+            click_on=True,
             try_numb: int = 10,
             scroll_to: bool = True
     ) -> bool:
         """функция для попыток клика по элементу"""
+        if xpath in [None, 'None']:
+            return False
         for i in range(try_numb):
             try:
-                if window_numb is not None:
+                if focus_on:
                     self.switch_to_frame(web.XpathResolver.iframe())
                     # perform click
                     actions = ActionChains(driver)
-                    actions.move_by_offset(0, 0).perform()
+                    if click_on:
+                        actions.move_by_offset(0, 0).click().perform()
+                    else:
+                        actions.move_by_offset(0, 0).perform()
                 if scroll_to:
                     run_button_element = driver.find_element(By.XPATH, xpath)
                     driver.execute_script("arguments[0].scrollIntoView(true);", run_button_element)
@@ -82,8 +88,10 @@ class AuxFunc:
         return False
 
     @staticmethod
-    def try_get_text(xpath, amount=0, try_numb=10) -> Union[str, List]:
+    def try_get_text(xpath: str, amount: int = 0, try_numb: int = 10) -> Union[str, List, None]:
         """пытаемся извлечь текст из элемента"""
+        if xpath in [None, 'None', '']:
+            return
         for i in range(try_numb):
             if not amount:  # если нужно искать несколько элементов
                 try:

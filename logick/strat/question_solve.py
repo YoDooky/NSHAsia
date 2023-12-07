@@ -98,7 +98,7 @@ class QuestionStrategy:
         write_webdata_to_db()  # update data to write selected answers
         AuxFunc().try_click(xpath=XpathResolver.answer_button())  # click <ОТВЕТИТЬ> button
 
-        if self.find_result():
+        if self.is_correct_answer():
             self.write_if_correct_result()
         else:
             self.write_if_wrong_result()
@@ -114,12 +114,14 @@ class QuestionStrategy:
                 return False
         return True
 
-    @staticmethod
-    def get_result_data() -> str:
-        return AuxFunc().try_get_text(xpath=XpathResolver.answer_result(), amount=1, try_numb=2)
-
-    def find_result(self) -> bool:
-        answer_result = self.get_result_data().lower().replace(' ', '')
+    def is_correct_answer(self) -> bool:
+        answer_result = AuxFunc().try_get_text(
+            xpath=XpathResolver.answer_result(),
+            amount=1,
+            try_numb=2
+        ).lower().replace(' ', '')
+        if answer_result is None:
+            raise NoAnswerResult
         if 'неправильно' in answer_result:
             return False
         elif 'правильно' in answer_result:
@@ -203,7 +205,7 @@ class QuestionStrategyB(QuestionStrategy):
         write_webdata_to_db()  # update data to write selected answers
         AuxFunc().try_click(xpath=XpathResolver.answer_button())  # click <ОТВЕТИТЬ> button
 
-        result = self.find_result()
+        result = self.is_correct_answer()
         if result is None:
             return
         if result:
@@ -220,7 +222,7 @@ class QuestionStrategyB(QuestionStrategy):
             return None
         return int(re.findall(r'\d+', topic_score_text)[0])
 
-    def find_result(self) -> Union[bool, None]:
+    def is_correct_answer(self) -> Union[bool, None]:
         if self.start_score is None:
             raise NoAnswerResult
         current_score = self.get_result_data()

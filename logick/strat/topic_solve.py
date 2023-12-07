@@ -2,9 +2,9 @@ import time
 from typing import Type
 
 from playsound import playsound
-from selenium.webdriver import ActionChains
 import logging
 
+from app_types import TopicData, TopicType
 from config import MUSIC_FILE_PATH
 from exceptions import QuizEnded, NoFoundedElement
 from log import print_log
@@ -37,12 +37,12 @@ video_topics = [
 
 
 class TopicStrategy:
-    def __init__(self, topic_name: str):
+    def __init__(self, topic_data: TopicData):
         self.question_strategy = None
         self.theory_strategy = None
         self.theory_solver = None  # TheorySolveStrategy object
 
-        self.topic_name = topic_name
+        self.topic = topic_data
         self.last_question_text = None
         self.has_next_button = True  # define if topic has <ПРОДОЛЖИТЬ> button after cliked <ОТВЕТИТЬ> button
 
@@ -83,14 +83,22 @@ class TopicStrategy:
         self.solve_quiz()
         # if current test is passed then check if there is next topic and run solving again
         if self.is_quiz_passed():
-            if AuxFunc().try_click(xpath=XpathResolver.next_test_part(), try_numb=5, window_numb=1):
-                print_log('В текущей теме найдена кнопка далее, продолжаю решать')
+            if AuxFunc().try_click(
+                    xpath=XpathResolver.next_test_part(),
+                    try_numb=5,
+                    focus_on=True,
+                    click_on=True
+            ):
+                print_log('В текущей теме найдена кнопка <Далее>, продолжаю решать')
                 self.main()
-            print_log('Решение темы завершено')
-            self.question_strategy = None
-            return
+            else:
+                print_log('Решение темы завершено')
+                self.question_strategy = None
+                return
         # if quiz is not passed then try again
-        self.end_solve()
+        else:
+            time.sleep(3)
+            self.end_quiz_solve()
 
     def solve_quiz(self):
         """Solve current topic"""
@@ -107,7 +115,13 @@ class TopicStrategy:
             question_num += 1
         self.update_db(questions_amount=question_num)
         try:
-            self.click_next_button(XpathResolver.results_button())
+            AuxFunc().try_click(
+                xpath=XpathResolver.results_button(),
+                focus_on=True,
+                click_on=True,
+                scroll_to=False,
+                try_numb=5
+            )
         except Exception as ex:
             playsound(MUSIC_FILE_PATH)
             self.question_strategy = None
@@ -116,16 +130,49 @@ class TopicStrategy:
             input('-> Нажми Enter чтобы попробовать продолжить решение')
             self.main()
 
+    def end_quiz_solve(self):
+        """
+        # If there is <Повторить тест> button then click it, else reboot page and repeat
+        solve from theory.
+        :return:
+        """
+        repeat_button_mask = XpathResolver.repeat_button()
+        if repeat_button_mask:
+            print_log('-> Не набрано нужное количество баллов. Пробую нажать кнопку <Повторить тест>')
+            AuxFunc().try_click(
+                xpath=XpathResolver.repeat_button(),
+                focus_on=True,
+                click_on=True,
+                scroll_to=False,
+                try_numb=5
+            )
+            self.do_quiz()
+        else:
+            print_log('-> Не набрано нужное количество баллов. Пробую перезагрузить тест')
+            driver.refresh()
+            utils.close_alert()
+            utils.set_popup(False)
+            UserController().clear_table()
+            # repeat solving from theory
+            self.main()
+
     def solve_question(self, num: int):
         """Solve current question"""
         if num != 0:
             if self.has_next_button is True:
-                self.has_next_button = self.click_next_button(XpathResolver.continue_button())
+                self.has_next_button = AuxFunc().try_click(
+                    xpath=XpathResolver.continue_button(),
+                    focus_on=True,
+                    click_on=True,
+                    scroll_to=False,
+                    try_numb=5
+                )
             if not self.is_next_question(self.last_question_text):
-                if AuxFunc().try_get_text(xpath=XpathResolver.continue_button(), try_numb=3):
-                    raise QuizEnded
                 if AuxFunc().try_get_text(xpath=XpathResolver.results_button(), try_numb=3):
                     raise QuizEnded
+                if AuxFunc().try_get_text(xpath=XpathResolver.continue_button(), try_numb=3):
+                    if AuxFunc().try_get_text(xpath=XpathResolver.quiz_result(), try_numb=3):
+                        raise QuizEnded
 
         q_solve = question_solve.QuestionSolve(strategy=self.question_strategy)
         self.last_question_text = AuxFunc().try_get_text(
@@ -134,7 +181,9 @@ class TopicStrategy:
 
     def _get_theory_strategy(self) -> TheoryStrategy:
         """Returns theory type"""
-        if not all([topic not in self.topic_name.lower() for topic in video_topics]):
+        if self.topic.type in [TopicType.page, TopicType.study_material]:
+            return TheoryStrategyA()
+        if not all([topic not in self.topic.name.lower() for topic in video_topics]):
             return TheoryStrategyB()
         elif AuxFunc().try_get_text(xpath=XpathResolver.quiz_form(), amount=1):
             return TheoryStrategyC()
@@ -145,7 +194,7 @@ class TopicStrategy:
 
     def do_exception_question(self):
         """Check if there is exceptions question and call user"""
-        if self.topic_name not in exception_topics:
+        if self.topic.name not in exception_topics:
             return
         # check if there is question text
         try:
@@ -159,73 +208,40 @@ class TopicStrategy:
         if not question_text:
             return
         # checks if questions text contains exception question
-        if question_text[0] not in exception_topics[self.topic_name]:
+        if question_text[0] not in exception_topics[self.topic.name]:
             return
         # call user if there is exception question
         playsound(MUSIC_FILE_PATH)
-        print_log(message=f'\nТема: <{self.topic_name}> добавлена в исключения'
+        print_log(message=f'\nТема: <{self.topic.name}> добавлена в исключения'
                           f'\nРеши вопрос сам и перейди к нормальному окну с вопросами')
         input('\nНажми Enter для продолжения')
         if not utils.is_quiz():
             self.main()
 
-    @staticmethod
-    def click_next_button(mask: str):
-        """Click button"""
-        AuxFunc().switch_to_frame(xpath=XpathResolver.iframe())
-        actions = ActionChains(driver)
-        try_numb = 5
-        for i in range(try_numb):
-            actions.move_by_offset(0, 0).click().perform()
-            if not AuxFunc().try_click(xpath=mask, scroll_to=False, try_numb=2):
-                continue
-            else:
-                return True
-        return False
-
-    def end_solve(self):
-        """
-        # If there is <Повторить тест> button then click it, else reboot page and repeat
-        solve from theory.
-        :return:
-        """
-        repeat_button_mask = XpathResolver.repeat_button()
-        if repeat_button_mask:
-            self.click_next_button(XpathResolver.repeat_button())
-            self.solve_quiz()
-        else:
-            driver.refresh()
-            utils.close_alert()
-            utils.set_popup(False)
-            UserController().clear_table()
-            # repeat solving from theory
-            self.main()
-
     def is_quiz_passed(self):
         """Check if quiz solved"""
-        # wait loading quiz_score
+        text = ''
         for i in range(10):
             try:
-                XpathResolver.quiz_score()
-                break
+                text = AuxFunc().try_get_text(xpath=XpathResolver.quiz_result(), amount=1)
+                if text:
+                    break
             except NoFoundedElement:
                 time.sleep(1)
                 continue
-
-        text = AuxFunc().try_get_text(xpath=XpathResolver.quiz_score(), amount=10)
-        if text is None:
+        if text in [None, '']:
             playsound(MUSIC_FILE_PATH)
             print_log('-> Не прогрузился экран с результатами.')
             input('-> Перейди на экран с результатами и нажми Enter')
             self.is_quiz_passed()
-        if ' не ' not in text:
-            return True
-        return False
+        if ' не ' in text:
+            return False
+        return True
 
     @staticmethod
     def is_next_question(last_questions_text: str) -> bool:
         """Wait next question load"""
-        for i in range(1, 5):
+        for i in range(5):
             current_question_text = AuxFunc().try_get_text(XpathResolver.question_text())
             if current_question_text is None:
                 return False
@@ -235,35 +251,15 @@ class TopicStrategy:
                 return True
         return False
 
-    # @staticmethod
-    # def is_quiz() -> bool:
-    #     """Check if there is quiz question"""
-    #     try:
-    #         question_text = AuxFunc().try_get_text(
-    #             xpath=XpathResolver.question_text(),
-    #             try_numb=5
-    #         )
-    #         answer_text = AuxFunc().try_get_text(
-    #             xpath=XpathResolver.answer_text(),
-    #             try_numb=5
-    #         )
-    #     except NoFoundedElement:
-    #         return False
-    #     if question_text is None or answer_text is None:
-    #         return False
-    #     if len(question_text) > 1:
-    #         return False
-    #     return True
-
     def update_db(self, questions_amount: int = 0, theory_clicks: int = 0):
         """Updates user data in db for current topic"""
-        if self.topic_name not in [data.topic_name for data in UserController().read()]:
-            UserController().write(User(topic_name=self.topic_name))
+        if self.topic.name not in [data.topic_name for data in UserController().read()]:
+            UserController().write(User(topic_name=self.topic.name))
         if questions_amount == 0 and theory_clicks == 0:  # if no data to update return
             return
         data_id = 1
         for data in UserController().read():
-            if data.topic_name == self.topic_name:
+            if data.topic_name == self.topic.name:
                 data_id = data.id
                 theory_clicks += data.theory_clicks
                 questions_amount += data.questions_amount
@@ -283,5 +279,5 @@ class TopicSolveStrategy:
     def __init__(self, strategy: Type[TopicStrategy]):
         self.strategy = strategy
 
-    def do_work(self, topic_name: str):
-        return self.strategy(topic_name).main()
+    def do_work(self, topic_data: TopicData):
+        return self.strategy(topic_data).main()

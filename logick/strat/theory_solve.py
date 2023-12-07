@@ -21,7 +21,7 @@ from logick.strat.utils import RandomDelay
 class TheoryStrategy(ABC):
     def __init__(self):
         self.theory_click_counter = 0
-        self.theory_buttons_roadmap = None
+        # self.theory_buttons_roadmap = None
 
     @abstractmethod
     def main(self):
@@ -32,25 +32,26 @@ class TheoryStrategy(ABC):
         sys.stdout.write('\r' + f"Количество успешных кликов: {self.theory_click_counter}")  # print on one line
         sys.stdout.flush()
 
-    # @staticmethod
-    def go_next(self):
+    @staticmethod
+    def go_next():
         buttons = [
             XpathResolver.goto_quiz_button,
             XpathResolver.start_button,
             XpathResolver.continue_button
         ]
-        if self.theory_buttons_roadmap is None:
-            self.theory_buttons_roadmap = buttons
-            for button in self.theory_buttons_roadmap:
-                if not AuxFunc().try_click(xpath=button(), try_numb=8):
-                    self.theory_buttons_roadmap.remove(button)
-                # if there is question and answers return
-                if utils.is_quiz():
-                    return
-            return
-            # if theory buttons roadmap exist then iterate through it
-        for button in self.theory_buttons_roadmap:
-            AuxFunc().try_click(xpath=button(), try_numb=8)
+        # if self.theory_buttons_roadmap is None:
+        #     self.theory_buttons_roadmap = []
+        for button in buttons:
+            if not AuxFunc().try_click(xpath=button(), try_numb=8):
+                continue
+            # self.theory_buttons_roadmap.append(button)
+            # if there is question and answers return
+            if utils.is_quiz():
+                return
+        # return
+        # if theory buttons roadmap exist then iterate through it
+        # for button in self.theory_buttons_roadmap:
+        #     AuxFunc().try_click(xpath=button(), try_numb=8)
 
 
 class TheoryStrategyA(TheoryStrategy):
@@ -60,7 +61,7 @@ class TheoryStrategyA(TheoryStrategy):
     def __init__(self):
         super().__init__()
         self.same_page_counter = 0
-        self.next_theory_button = XpathResolver.next_theory()
+
         self.last_page_src = None
 
     def main(self):
@@ -71,10 +72,10 @@ class TheoryStrategyA(TheoryStrategy):
             xpath=XpathResolver.next_theory_treecontrol(),
             element=1,
             try_numb=3,
-            window_numb=1
+            focus_on=True
         )
         # skip general theory
-        while AuxFunc().try_click(xpath=self.next_theory_button, try_numb=3, window_numb=1):
+        while AuxFunc().try_click(xpath=XpathResolver.next_theory(), try_numb=3, focus_on=True):
             self._count_theory_clicks()
         self.go_next()
 
@@ -202,8 +203,8 @@ class TheoryStrategyC(TheoryStrategy):
         #         data.input_link.send_keys(self.INPUT_DATA[data.input_name])
         #     time.sleep(1)
         #
-        AuxFunc().try_click(XpathResolver.answer_button(), window_numb=1)
-        AuxFunc().try_click(XpathResolver.continue_theory_button(), window_numb=1)
+        AuxFunc().try_click(XpathResolver.answer_button(), focus_on=True)
+        AuxFunc().try_click(XpathResolver.continue_theory_button(), focus_on=True)
 
     @staticmethod
     def get_form_data():

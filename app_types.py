@@ -15,3 +15,11 @@ class TopicData:
     """Topic data class"""
     name: str
     status: str
+    type: str = ''
+    link: WebElement = None
+
+
+class TopicType:
+    page = 'Страница'
+    study_material = 'Учебный материал'
+    video = 'Видео'

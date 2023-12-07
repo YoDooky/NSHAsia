@@ -13,20 +13,20 @@ if __name__ == '__main__':
     init_logging_config()  # initiate logging config
     config.Folders.init_folders()
 
-    playsound(MUSIC_FILE_PATH)
-    if input('\nНажми <y>, посчитай до 3 секунд, после нажми Enter для выгрузки в excel'
-             '\nЕсли не хочешь выгружать просто нажми Enter'
-             '\nЕсли нихуя не понял просто нажми Enter') == 'y':
-        excel_data.export_to_excel()
+    # playsound(MUSIC_FILE_PATH) TESTONLY
+    # if input('\nНажми <y>, посчитай до 3 секунд, после нажми Enter для выгрузки в excel'
+    #          '\nЕсли не хочешь выгружать просто нажми Enter'
+    #          '\nЕсли нихуя не понял просто нажми Enter') == 'y':
+    #     excel_data.export_to_excel() TESTONLY
 
-    driver.get('https://pnsh.ispringlearn.ru/courses')
+    # driver.get('https://pnsh.ispringlearn.ru/courses') TESTONLY
 
-    print('<<<<<    15.11.2023. NSHAsia rev.0.0.8  >>>>>')  # version description
+    print('<<<<<    05.12.2023. NSHAsia rev.0.0.9  >>>>>')  # version description
 
     repeat = ''
     while repeat != 'q':
-        playsound(MUSIC_FILE_PATH)
-        repeat = input('\nНажми <Enter> чтобы решить курс уважаемый человек (петушок).')
+        # playsound(MUSIC_FILE_PATH) TESTONLY
+        # repeat = input('\nНажми <Enter> чтобы решить курс уважаемый человек (петушок).') TESTONLY
         UserController().clear_table()
         try:
             driver.switch_to.window(driver.window_handles[0])
