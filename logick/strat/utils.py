@@ -2,7 +2,6 @@ import itertools
 import time
 from random import randint
 from typing import List
-
 from selenium.common import NoAlertPresentException
 
 from aux_functions import AuxFunc
@@ -125,3 +124,5 @@ def is_quiz() -> bool:
     if len(question_text) > 1:
         return False
     return True
+
+

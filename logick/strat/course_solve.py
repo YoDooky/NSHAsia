@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Type, List
 from playsound import playsound
 
+from app_types import UserMessages
 from config import MUSIC_FILE_PATH
 from db import UserController
 from driver_init import driver
@@ -11,6 +12,7 @@ from exceptions import QuizEnded
 from log import print_log
 from logick.solve.topic_solve import TopicSolve
 from logick.strat import utils
+from logick.strat.decorators import FunctionTry
 from web import CourseWebData, XpathResolver
 
 
@@ -56,7 +58,7 @@ class CourseStrategy:
         self.course_topics = CourseWebData().get_data()
         if not self.is_topic_solved(topic_num - 1):
             print_log(f'-> Пробую решить заново тему:'
-                      f'\n{self.course_topics[topic_num - 1]}')
+                      f'\n{self.course_topics[topic_num - 1].name}')
             self.solve(topic_num - 1)
         self.current_topic = self.course_topics[topic_num - 1]
         AuxFunc().try_webclick(self.current_topic.link)
@@ -132,7 +134,7 @@ class CourseStrategy:
             return False
         if not all([status not in topic_status.lower() for status in self.topic_bad_status]):
             print_log(f'-> Не решена тема:'
-                      f'\n{self.course_topics[topic_num - 1]}')
+                      f'\n{self.course_topics[topic_num - 1].name}')
             return False
         return True
 
@@ -146,27 +148,24 @@ class CourseStrategy:
         if self.topic_attemps > self.MAX_TOPIC_ATTEMPS:
             playsound(MUSIC_FILE_PATH)
             self.topic_attemps = 0
-            input('\n-> Реши сам кожаный мешок и нажми <Enter>')
+            input('\n[ERR] Превышено максимально количество повторов решения'
+                  '\n-> Реши сам кожаный мешок и нажми <Enter>')
             return
         self.solve(topic_num)
 
+    @FunctionTry(message_to_user=UserMessages.cant_end_topic)
     def end_solve(self):
         """Close topic window and got to course topics"""
         time.sleep(10)
-        try:
-            if len(driver.window_handles) > 1:
-                driver.switch_to.window(driver.window_handles[-1])
-                utils.close_alert()
-                driver.close()
-                time.sleep(1)
-            driver.switch_to.window(driver.window_handles[0])
-            driver.get(self.course_url)
+        if len(driver.window_handles) > 1:
+            driver.switch_to.window(driver.window_handles[-1])
             utils.close_alert()
-            time.sleep(10)
-        except Exception as ex:
-            playsound(MUSIC_FILE_PATH)
-            print_log(message='[ERR] Не могу завершить тему.', exception=ex)
-            input('\n-> Перейди на экран с темами и нажми Enter')
+            driver.close()
+            time.sleep(1)
+        driver.switch_to.window(driver.window_handles[-1])
+        driver.get(self.course_url)
+        utils.close_alert()
+        time.sleep(10)
 
     def print_summary(self):
         """Print topics summary"""

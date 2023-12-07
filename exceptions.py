@@ -59,3 +59,11 @@ class QuizEnded(Exception):
     def __init__(self):
         super().__init__(
             'Новые вопросы не появляются. Скорее всего из-за конца темы')
+
+
+class CantFindResultPage(Exception):
+    """"""
+
+    def __init__(self):
+        super().__init__(
+            'Не могу найти экран с результатами')

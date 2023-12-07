@@ -23,3 +23,11 @@ class TopicType:
     page = 'Страница'
     study_material = 'Учебный материал'
     video = 'Видео'
+
+
+class UserMessages:
+    """
+    Class for messages to user when need to call him
+    """
+    cant_end_topic = '\n-> [ERR] Не могу завершить тему. Перейди на экран с темами и нажми Enter'
+    cant_go_to_result_page = '\n-> [ERR] Не смог перейти на экран с результатами'

@@ -1,12 +1,10 @@
 import time
 from typing import Type
-
 from playsound import playsound
-import logging
 
-from app_types import TopicData, TopicType
+from app_types import TopicData, TopicType, UserMessages
 from config import MUSIC_FILE_PATH
-from exceptions import QuizEnded, NoFoundedElement
+from exceptions import QuizEnded, NoFoundedElement, CantFindResultPage
 from log import print_log
 from aux_functions import AuxFunc
 from driver_init import driver
@@ -76,6 +74,8 @@ class TopicStrategy:
         """Quiz"""
         # processing topics added to exceptions
         self.do_exception_question()
+        # try to click <Повторить тест> (it can be if quiz solved again from result screen)
+        AuxFunc().try_click(xpath=XpathResolver.repeat_button(), try_numb=3)
         # if current topic is not quiz then topic is ended
         if not utils.is_quiz():
             raise QuizEnded
@@ -98,7 +98,7 @@ class TopicStrategy:
         # if quiz is not passed then try again
         else:
             time.sleep(3)
-            self.end_quiz_solve()
+            self.repeat_quiz_solve()
 
     def solve_quiz(self):
         """Solve current topic"""
@@ -114,23 +114,28 @@ class TopicStrategy:
                 break
             question_num += 1
         self.update_db(questions_amount=question_num)
-        try:
-            AuxFunc().try_click(
-                xpath=XpathResolver.results_button(),
-                focus_on=True,
-                click_on=True,
-                scroll_to=False,
-                try_numb=5
-            )
-        except Exception as ex:
-            playsound(MUSIC_FILE_PATH)
-            self.question_strategy = None
-            print_log(message='[ERR] Возникла проблема при решении темы.', exception=ex)
-            logging.exception("An error occurred during topic solving")
-            input('-> Нажми Enter чтобы попробовать продолжить решение')
-            self.main()
+        self.end_quiz_solve()
 
     def end_quiz_solve(self):
+        """
+        Go to quiz result page
+        :return:
+        """
+        if not AuxFunc().try_click(
+            xpath=XpathResolver.results_button(),
+            focus_on=True,
+            click_on=True,
+            scroll_to=False,
+            try_numb=5
+        ):
+            playsound(MUSIC_FILE_PATH)
+            self.question_strategy = None
+            print_log(message=UserMessages.cant_go_to_result_page)
+            raise CantFindResultPage
+            # input('-> Нажми Enter чтобы попробовать продолжить решение')
+            # self.main()
+
+    def repeat_quiz_solve(self):
         """
         # If there is <Повторить тест> button then click it, else reboot page and repeat
         solve from theory.
@@ -232,8 +237,9 @@ class TopicStrategy:
         if text in [None, '']:
             playsound(MUSIC_FILE_PATH)
             print_log('-> Не прогрузился экран с результатами.')
-            input('-> Перейди на экран с результатами и нажми Enter')
-            self.is_quiz_passed()
+            raise CantFindResultPage
+            # input('-> Перейди на экран с результатами и нажми Enter')
+            # self.is_quiz_passed()
         if ' не ' in text:
             return False
         return True
