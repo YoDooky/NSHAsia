@@ -47,20 +47,48 @@ class TopicStrategy:
 
     def main(self):
         self.question_strategy = None
-        # self.page_type = self._define_page_type()
-        self.do_theory()
-        self.do_quiz()
+        self.page_type = self._define_page_type()
+        if self.page_type == PageType.theory:
+            self.do_theory()
+            self.do_quiz()
+        elif self.page_type == PageType.quiz:
+            AuxFunc().try_click(
+                xpath=XpathResolver.continue_button(),
+                focus_on=True,
+                click_on=True,
+                scroll_to=False,
+                try_numb=3
+            )
+            if AuxFunc().try_click(
+                xpath=XpathResolver.results_button(),
+                focus_on=True,
+                click_on=True,
+                scroll_to=False,
+                try_numb=3
+            ):
+                AuxFunc().try_click(
+                    xpath=XpathResolver.repeat_button(),
+                    focus_on=True,
+                    click_on=True,
+                    scroll_to=False,
+                    try_numb=3
+                )
+            self.do_quiz()
+        elif self.page_type == PageType.result_page:
+            self.repeat_quiz_solve()
 
-    @staticmethod
-    def _define_page_type() -> PageType:
+    def _define_page_type(self) -> PageType:
         """
         Define page type (quiz/theory/result_page)
         :return: PageType (quiz/theory/result_page)
         """
         if utils.is_quiz():
             return PageType.quiz
-        elif AuxFunc.try_get_text(xpath=XpathResolver.current_score()):
-            return PageType.result_page
+        # if theory_strategy is None its means that topic opened first time in this session
+        # so there is not a page with quiz results
+        elif self.theory_strategy is None:
+            if AuxFunc.try_get_text(xpath=XpathResolver.quiz_result()):
+                return PageType.result_page
         return PageType.theory
 
     def do_theory(self):
@@ -88,8 +116,6 @@ class TopicStrategy:
         """Quiz"""
         # processing topics added to exceptions
         self.do_exception_question()
-        # try to click <Повторить тест> (it can be if quiz solved again from result screen)
-        AuxFunc().try_click(xpath=XpathResolver.repeat_button(), try_numb=3)
         # if current topic is not quiz then topic is ended
         if not utils.is_quiz():
             raise QuizEnded
