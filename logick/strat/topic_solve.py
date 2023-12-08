@@ -2,7 +2,7 @@ import time
 from typing import Type
 from playsound import playsound
 
-from app_types import TopicData, TopicType, UserMessages
+from app_types import TopicData, TopicType, UserMessages, PageType
 from config import MUSIC_FILE_PATH
 from exceptions import QuizEnded, NoFoundedElement, CantFindResultPage
 from log import print_log
@@ -43,11 +43,25 @@ class TopicStrategy:
         self.topic = topic_data
         self.last_question_text = None
         self.has_next_button = True  # define if topic has <ПРОДОЛЖИТЬ> button after cliked <ОТВЕТИТЬ> button
+        self.page_type = None
 
     def main(self):
         self.question_strategy = None
+        # self.page_type = self._define_page_type()
         self.do_theory()
         self.do_quiz()
+
+    @staticmethod
+    def _define_page_type() -> PageType:
+        """
+        Define page type (quiz/theory/result_page)
+        :return: PageType (quiz/theory/result_page)
+        """
+        if utils.is_quiz():
+            return PageType.quiz
+        elif AuxFunc.try_get_text(xpath=XpathResolver.current_score()):
+            return PageType.result_page
+        return PageType.theory
 
     def do_theory(self):
         """Theory"""
@@ -122,11 +136,11 @@ class TopicStrategy:
         :return:
         """
         if not AuxFunc().try_click(
-            xpath=XpathResolver.results_button(),
-            focus_on=True,
-            click_on=True,
-            scroll_to=False,
-            try_numb=5
+                xpath=XpathResolver.results_button(),
+                focus_on=True,
+                click_on=True,
+                scroll_to=False,
+                try_numb=5
         ):
             playsound(MUSIC_FILE_PATH)
             self.question_strategy = None
@@ -188,6 +202,8 @@ class TopicStrategy:
         """Returns theory type"""
         if self.topic.type in [TopicType.page, TopicType.study_material]:
             return TheoryStrategyA()
+        if self.topic.type in [TopicType.video]:
+            return TheoryStrategyB()
         if not all([topic not in self.topic.name.lower() for topic in video_topics]):
             return TheoryStrategyB()
         elif AuxFunc().try_get_text(xpath=XpathResolver.quiz_form(), amount=1):

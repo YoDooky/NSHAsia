@@ -35,7 +35,7 @@ class CourseStrategy:
 
     def main(self):
         topics = CourseWebData().get_course_topics()
-        print_log('--> В курсе найдены следующие темы:')
+        print_log(f'{UserMessages.founded_next_topics}')
         for num, topic in enumerate(topics):
             print_log(f'*{num + 1}* {CourseWebData().get_topic_name(topic)}')
 
@@ -43,10 +43,7 @@ class CourseStrategy:
         for topic_num in self.get_topics_from_user():
             self.topic_attemps = 0
             self.solve(topic_num)
-            for try_numb in range(self.MAX_TOPIC_ATTEMPS):
-                if self.is_topic_solved(topic_num):
-                    break
-                print_log('-> Не удалось решить тему. Пробую еще раз...')
+            if not self.is_topic_solved(topic_num):
                 self.repeat_solve(topic_num)
         user_data = self.get_user_data()
         print_log(f'\n***************************** ИТОГ *********************************'
@@ -57,13 +54,13 @@ class CourseStrategy:
         """Solving demand topic"""
         self.course_topics = CourseWebData().get_data()
         if not self.is_topic_solved(topic_num - 1):
-            print_log(f'-> Пробую решить заново тему:'
+            print_log(f'{UserMessages.try_solve_topic_again}'
                       f'\n{self.course_topics[topic_num - 1].name}')
             self.solve(topic_num - 1)
         self.current_topic = self.course_topics[topic_num - 1]
         AuxFunc().try_webclick(self.current_topic.link)
+        print_log(f'{UserMessages.choose_topic} {self.current_topic.name}')
         time.sleep(10)
-        print_log(f'\n\n---> Выбираю тему: <{self.current_topic.name}>')
         try:
             utils.set_popup(True)
             TopicSolve().main(self.current_topic)
@@ -74,7 +71,7 @@ class CourseStrategy:
             self.print_summary()
             return
         except Exception as ex:
-            print_log(message='\n-> [ERR] Не смог решить тему. Пробую еще раз', exception=ex)
+            print_log(message=UserMessages.cant_solve_topic_try_again, exception=ex)
             self.repeat_solve(topic_num)
 
     def get_unsolved_topics(self) -> List[int]:
@@ -93,8 +90,7 @@ class CourseStrategy:
     @staticmethod
     def get_topics_from_user() -> List[int]:
         """Return user selected courses"""
-        user_input = input('\n-> Введи номера курсов для решения через запятую, и/или '
-                           'через тире если нужно решить несколько подряд:')
+        user_input = input(UserMessages.input_topics_nums)
         str_mod = user_input.split(',')
         str_comma = [int(s.strip()) for s in str_mod if '-' not in s]
 
@@ -125,7 +121,7 @@ class CourseStrategy:
             if topics_status:
                 break
         if topics_status is None:
-            print_log(f'-> Не смог найти статус (решена / не решена) для темы:'
+            print_log(f'{UserMessages.cant_fint_topic_status}'
                       f'\n {self.course_topics[topic_num - 1]}')
             return False
         try:
@@ -133,7 +129,7 @@ class CourseStrategy:
         except IndexError:
             return False
         if not all([status not in topic_status.lower() for status in self.topic_bad_status]):
-            print_log(f'-> Не решена тема:'
+            print_log(f'{UserMessages.cant_solve_topic}'
                       f'\n{self.course_topics[topic_num - 1].name}')
             return False
         return True
@@ -148,8 +144,7 @@ class CourseStrategy:
         if self.topic_attemps > self.MAX_TOPIC_ATTEMPS:
             playsound(MUSIC_FILE_PATH)
             self.topic_attemps = 0
-            input('\n[ERR] Превышено максимально количество повторов решения'
-                  '\n-> Реши сам кожаный мешок и нажми <Enter>')
+            input(UserMessages.max_solve_attempts_exceed)
             return
         self.solve(topic_num)
 

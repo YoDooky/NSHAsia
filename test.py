@@ -1,3 +1,2 @@
-str_1 = None
-if 'awdawd' in str_1:
-    print(True)
+str_1 = 'awdawd'
+print(str_1.split('\n')[0].strip())
