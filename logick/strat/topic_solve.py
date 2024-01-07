@@ -60,11 +60,11 @@ class TopicStrategy:
                 try_numb=3
             )
             if AuxFunc().try_click(
-                xpath=XpathResolver.results_button(),
-                focus_on=True,
-                click_on=True,
-                scroll_to=False,
-                try_numb=3
+                    xpath=XpathResolver.results_button(),
+                    focus_on=True,
+                    click_on=True,
+                    scroll_to=False,
+                    try_numb=3
             ):
                 AuxFunc().try_click(
                     xpath=XpathResolver.repeat_button(),
@@ -87,14 +87,18 @@ class TopicStrategy:
         # if theory_strategy is None its means that topic opened first time in this session
         # so there is not a page with quiz results
         elif self.theory_strategy is None:
-            if AuxFunc.try_get_text(xpath=XpathResolver.quiz_result()):
+            if utils.is_result_page():
                 return PageType.result_page
         return PageType.theory
 
     def do_theory(self):
         """Theory"""
         # try to click start button to define topic type after
-        AuxFunc().try_click(xpath=XpathResolver.start_button(), try_numb=8)
+        AuxFunc().try_click(
+            xpath=XpathResolver.start_button(),
+            try_numb=8,
+            click_on=True
+        )
         time.sleep(5)
         if self.theory_strategy is None:
             self.theory_strategy = self._get_theory_strategy()
@@ -226,7 +230,7 @@ class TopicStrategy:
 
     def _get_theory_strategy(self) -> TheoryStrategy:
         """Returns theory type"""
-        if self.topic.type in [TopicType.page, TopicType.study_material]:
+        if self.topic.type in [TopicType.page, TopicType.longread, TopicType.study_material]:
             return TheoryStrategyA()
         if self.topic.type in [TopicType.video]:
             return TheoryStrategyB()

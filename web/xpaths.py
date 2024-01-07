@@ -234,6 +234,16 @@ class XpathResolver:
 
     @staticmethod
     @xpath_decorator(has_exception=False)
+    def complete_theory():
+        """
+        <Завершить> button. This type of button could be on <Лонгрид> and <Страница> type of topic
+        """
+        return [
+            '//*[@class="complete-section-content-container"]/button'
+        ]
+
+    @staticmethod
+    @xpath_decorator(has_exception=False)
     def next_test_part():
         """Button <ДАЛЕЕ> for topics where is many theory and test"""
         return [
@@ -294,7 +304,7 @@ class XpathResolver:
         ]
 
     @staticmethod
-    @xpath_decorator(has_exception=True)
+    @xpath_decorator(has_exception=False)
     def quiz_result():
         """Question score label at the end of the topic"""
         return [

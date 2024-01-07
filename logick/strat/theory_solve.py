@@ -75,8 +75,20 @@ class TheoryStrategyA(TheoryStrategy):
             focus_on=True
         )
         # skip general theory
-        while AuxFunc().try_click(xpath=XpathResolver.next_theory(), try_numb=3, focus_on=True):
+        while AuxFunc().try_click(
+                xpath=XpathResolver.next_theory(),
+                try_numb=3,
+                focus_on=True,
+                click_on=True
+        ):
             self._count_theory_clicks()
+        # Try click <Завершить> button. This type of button could be on <Лонгрид> and <Страница> type of topic
+        # AuxFunc().try_click(
+        #     xpath=XpathResolver.complete_theory(),
+        #     try_numb=3,
+        #     focus_on=True,
+        #     click_on=True
+        # )
         self.go_next()
 
     def _count_theory_clicks(self):

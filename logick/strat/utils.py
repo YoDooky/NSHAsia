@@ -1,4 +1,5 @@
 import itertools
+import re
 import time
 from random import randint
 from typing import List
@@ -126,3 +127,34 @@ def is_quiz() -> bool:
     return True
 
 
+def is_result_page() -> bool:
+    """
+    Check if there is resilt page
+    :return: True if there is result page
+    """
+
+    def contains_result_page_words(string: str) -> bool:
+        """
+        Search result page words by pattern
+        :param string:
+        :return: True if contains pattern words in string
+        """
+        pattern = re.compile(fr'\b{re.escape("вы")}\b.*\b{re.escape("тест")}\b', re.IGNORECASE)
+        match = pattern.search(string)
+        if match:
+            return True
+        return False
+
+    try:
+        question_text = AuxFunc.try_get_text(
+            xpath=XpathResolver.quiz_result(),
+            amount=1,
+            try_numb=5
+        )
+    except NoFoundedElement:
+        return False
+
+    if question_text in [None, '']:
+        return False
+
+    return contains_result_page_words(question_text)

@@ -115,6 +115,7 @@ class CourseStrategy:
         if topic_num <= 1:
             return True
         topics_status = None
+        time.sleep(10)
         for i in range(10):
             driver.switch_to.window(driver.window_handles[-1])
             topics_status = AuxFunc().try_get_text(XpathResolver.topic_status())
@@ -122,7 +123,7 @@ class CourseStrategy:
                 break
         if topics_status is None:
             print_log(f'{UserMessages.cant_fint_topic_status}'
-                      f'\n {self.course_topics[topic_num - 1]}')
+                      f'\n {self.course_topics[topic_num - 1].name}')
             return False
         try:
             topic_status = topics_status[topic_num - 1]
